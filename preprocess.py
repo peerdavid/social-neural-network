@@ -51,9 +51,9 @@ def resize_smaller_side(image_path, image, size):
 # M A I N
 #   
 def main(argv=None):
-    filenames, labels, num_classes = data_input.read_labeled_image_list(FLAGS.img_dir)
+    filenames, labels, num_classes = data_input.read_labeled_image_list(FLAGS.img_to_preprocess)
 
-    print("Preprocessing %s" % FLAGS.img_dir)
+    print("Preprocessing %s" % FLAGS.img_to_preprocess)
 
     num_images = len(filenames)
     for i in range(num_images):

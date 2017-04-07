@@ -146,10 +146,19 @@ def train():
             'global_step', [],
             initializer=tf.constant_initializer(0), trainable=False)
 
-        # Read car data
+        # Read social network images
         data_sets = data_input.read_validation_and_train_image_batches(FLAGS)
         train_dataset = data_sets.train
         validation_dataset = data_sets.validation
+
+        # Log images
+        f = open(FLAGS.train_dir + "train_images.txt", "w")
+        f.write("\n".join(train_dataset.image_list))
+        f.close()
+
+        f = open(FLAGS.train_dir + "validation_images.txt", "w")
+        f.write("\n".join(validation_dataset.image_list))
+        f.close()
 
         # Create placeholder
         images_pl, labels_pl, for_training_pl = utils.create_fine_tune_placeholder( 
@@ -158,10 +167,7 @@ def train():
                 FLAGS.image_depth)
 
         # Create an optimizer that performs gradient descent.
-        if FLAGS.optimizer == 1:
-            opt = tf.train.AdamOptimizer(FLAGS.initial_learning_rate)
-        else:
-            raise ValueError('Optimizer {0} is not supported'.format(FLAGS.optimizer))
+        opt = tf.train.AdamOptimizer(FLAGS.initial_learning_rate)
 
         input_summaries = copy.copy(tf.get_collection(tf.GraphKeys.SUMMARIES))
 
@@ -364,9 +370,6 @@ def validate(log_file, sess, dataset_name, images_pl, labels_pl, for_training_pl
         sys.stdout.flush()
     sys.stdout.write("                                                 \r")
     sys.stdout.flush()
-
-    # Create a report -> not in tensorboard so we calc every other values again
-    target_names = ['Katze', 'Haus', 'Auto']
 
     # Rows ~ True Labels, Cols ~ Predicted labels_pl
     # http://scikit-learn.org/stable/modules/model_evaluation.html#confusion-matrix

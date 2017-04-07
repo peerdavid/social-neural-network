@@ -33,10 +33,11 @@ def read_validation_and_train_image_batches(FLAGS):
     image_list, label_list = _shuffle_tow_arrays_together(image_list, label_list)   
     
     # Split into training and ing sets
-    train_images = image_list[FLAGS.validation_size:]
-    train_labels = label_list[FLAGS.validation_size:]
-    validation_images = image_list[:FLAGS.validation_size]
-    validation_labels = label_list[:FLAGS.validation_size]
+    abs_validation_size = (int)(len(image_list) * FLAGS.validation_size)
+    train_images = image_list[abs_validation_size:]
+    train_labels = label_list[abs_validation_size:]
+    validation_images = image_list[:abs_validation_size]
+    validation_labels = label_list[:abs_validation_size]
 
     assert all(validation_image not in train_images for validation_image in validation_images), "Some images are contained in both, validation- and training-set." 
     assert len(train_images) == len(train_labels), "Length of train image list and train label list is different"
@@ -54,7 +55,6 @@ def read_validation_and_train_image_batches(FLAGS):
     print("Batch size: {0}".format(train_data_set.batch_size))
     print("-----------------------------\n")
 
-    assert validation_data_set.size == FLAGS.validation_size, "Number of validation images is too big."
     assert validation_data_set.size < train_data_set.size, "More validation images than training images."
 
     data_sets = DataSet()

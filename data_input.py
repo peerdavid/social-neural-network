@@ -17,19 +17,19 @@ def read_image_batches_without_labels_from_file_list(image_list, FLAGS):
     return data_set
 
 
-def read_image_batches_with_labels_from_path(FLAGS):
-    image_list, label_list, num_classes = read_labeled_image_list(FLAGS.path)
+def read_image_batches_with_labels_from_path(FLAGS, path):
+    image_list, label_list, num_classes = read_labeled_image_list(path)
     data_set = _create_batches(image_list, label_list, FLAGS)
     data_set.num_classes = num_classes
     return data_set
 
 
-def read_validation_and_train_image_batches(FLAGS):
-    print("\nReading input images from {0}".format(FLAGS.img_dir))
+def read_validation_and_train_image_batches(FLAGS, path):
+    print("\nReading input images from {0}".format(path))
     print("-----------------------------")
        
     # Reads pathes of images together with their labels
-    image_list, label_list, num_classes = read_labeled_image_list(FLAGS.img_dir)
+    image_list, label_list, num_classes = read_labeled_image_list(path)
     image_list, label_list = _shuffle_tow_arrays_together(image_list, label_list)   
     
     # Split into training and ing sets

@@ -147,7 +147,7 @@ def train():
             initializer=tf.constant_initializer(0), trainable=False)
 
         # Read social network images
-        data_sets = data_input.read_validation_and_train_image_batches(FLAGS)
+        data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir)
         train_dataset = data_sets.train
         validation_dataset = data_sets.validation
 

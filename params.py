@@ -19,6 +19,8 @@ flags.DEFINE_string('train_dir', "log/", 'Directory to put the log data = Output
 flags.DEFINE_string('img_dir', 'data/train/', 'Base directory of data = Input (The folder name is the class id)')
 flags.DEFINE_integer('image_format', 0, '0 = JPEG, 1 = PNG')   
 
+flags.DEFINE_string('test_dir', 'data/test/', 'Base directory of data = Input (The folder name is the class id)')
+
 flags.DEFINE_integer('orig_image_width', 366, 'Width in pixels before random crop (only if random_distortion=True)')
 flags.DEFINE_integer('orig_image_height', 366, 'Height in pixels before random crop (only if random_distortion=True)')
 flags.DEFINE_integer('image_width', 299, 'Width in pixels of input image.')

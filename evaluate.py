@@ -88,13 +88,12 @@ def main(argv=None):
                 FLAGS.image_depth)
 
         # Load dataset to evaluate
-        datasets = data_input.read_validation_and_train_image_batches(FLAGS)
-        train_dataset = datasets.train
-        validation_dataset = datasets.validation
+        # ToDo: Use different path of images
+        dataset = data_input.read_image_batches_with_labels_from_path(FLAGS, FLAGS.test_dir)
 
         # Build a Graph that computes the logits predictions from the
         # inference model.
-        logits, _ = inception.inference(images_pl, validation_dataset.num_classes, 
+        logits, _ = inception.inference(images_pl, dataset.num_classes, 
             dropout_keep_prob=1.0, restore_logits=False, for_training=for_training_pl)
 
         # Restore the moving average version of the learned variables for eval.
@@ -117,7 +116,7 @@ def main(argv=None):
             
             print("\n## Evaluate dataset")
             calc_metrics(sess, logits, labels_pl, images_pl, for_training_pl, 
-                validation_dataset, should_calc_confusion_matrix=True)
+                dataset, should_calc_confusion_matrix=True)
 
         except Exception as e:
             coord.request_stop(e)

@@ -73,6 +73,7 @@ def read_labeled_image_list(path):
     Returns:
       List with all filenames and list with all labels
     """
+    print("Reading images from %s" % path)
     filenames = []
     labels = []
     label_dirs = [dir for dir in os.listdir(path) if os.path.isdir(os.path.join(path, dir))]

@@ -8,12 +8,13 @@ FLAGS = flags.FLAGS
 
 
 #
-# Preprocessing parameters
+# Preprocessing
 #
-flags.DEFINE_string('img_to_preprocess', 'data/conv/', 'Images to preprocess. Folder structure must be the same as train_dir')
+#flags.DEFINE_string('img_to_preprocess', 'data/test/', 'Images to preprocess. Folder structure must be the same as train_dir')
+flags.DEFINE_string('img_to_preprocess', 'data/train/', 'Images to preprocess. Folder structure must be the same as train_dir')
 
 #
-# Data input parameter
+# Data input
 #
 flags.DEFINE_string('train_dir', "log/", 'Directory to put the log data = Output.')
 flags.DEFINE_string('img_dir', 'data/train/', 'Base directory of data = Input (The folder name is the class id)')
@@ -35,7 +36,7 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 
 
 #
-# General training parameter
+# Training
 #
 flags.DEFINE_float('initial_learning_rate', 0.00001, 'Initial learning rate.')
 flags.DEFINE_integer('max_steps', 5000, 'Max. number of steps to run trainer.')
@@ -56,4 +57,4 @@ flags.DEFINE_string('pretrained_model_checkpoint_path', 'inception/data/inceptio
 #
 # Evaluation
 #
-flags.DEFINE_string('checkpoint', "log/model.ckpt-2000", 'Use this checkpoint file to restore the values')
+flags.DEFINE_string('checkpoint', "log/model.ckpt-3000", 'Use this checkpoint file to restore the values')

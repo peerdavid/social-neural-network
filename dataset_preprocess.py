@@ -47,13 +47,10 @@ def resize_smaller_side(image_path, image, size):
         .format(resize_cmd, image_path), shell=True)
     proc.wait()
 
-#
-# M A I N
-#   
-def main(argv=None):
-    filenames, labels, num_classes = data_input.read_labeled_image_list(FLAGS.img_to_preprocess)
+def preprocess(path):
+    filenames, labels, num_classes = data_input.read_labeled_image_list(path)
 
-    print("Preprocessing %s" % FLAGS.img_to_preprocess)
+    print("Preprocessing %s" % path)
 
     num_images = len(filenames)
     for i in range(num_images):
@@ -65,8 +62,18 @@ def main(argv=None):
         resize_image_keep_ratio(image_path, size)
         resize_image_fixed_size(image_path, size)
     print("Done.")
-    
-            
+
+
+#
+# M A I N
+#   
+def main(argv=None):
+    if(len(argv) > 1):
+        path = argv[1]
+    else:
+        path = FLAGS.img_to_preprocess
+
+    preprocess(path)
 
 if __name__ == '__main__':
     tf.app.run()

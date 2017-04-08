@@ -49,3 +49,9 @@ flags.DEFINE_boolean('fine_tune', True,
 flags.DEFINE_string('pretrained_model_checkpoint_path', 'inception/data/inception-v3/model.ckpt-157585',
                            """If specified, restore this pretrained model """
                            """before beginning any training.""")
+
+
+#
+# Evaluation
+#
+flags.DEFINE_string('checkpoint', "log/model.ckpt-2000", 'Use this checkpoint file to restore the values')

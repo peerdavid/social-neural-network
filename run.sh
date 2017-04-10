@@ -26,13 +26,17 @@ function main {
     fi
 
     # Finished with the dataset, so train the model
-    tensorboard --logdir log & &> /dev/null 
+    tensorboard --logdir log &> /dev/null &
+
+    # ToDo: If generation already exists, ask if it should be retrained or if we continue
     train_generation
 
     # Filter (wrong) dataset with the current generation
     filter_dataset_with_generation
 
-    # ToDo: Train next generation with filtered dataset
+    # ToDo: Filter dataset with generation n
+
+    # ToDo: Train generation n+1 with data filtered from generation n
 }
 
 

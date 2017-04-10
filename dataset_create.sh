@@ -11,11 +11,19 @@
 # Configuration
 CLASSES=("$@")
 DOWNLOAD_PATH="data/train"
-NUM_IMAGES=1000
+NUM_IMAGES=10
 
-# Prepare downloads folder
+# If folder already exists, ask user if he want a new dataset
+if [ -d "$DOWNLOAD_PATH" ]; then
+    read -p "A dataset already exists. Should we create a new one? (y/n) " -n 1 -r
+    echo    # (optional) move to a new line
+    if [[ $REPLY =~ ^[Yy]$ ]]
+    then
+      rm -rf $DOWNLOAD_PATH  
+    fi
+fi
+
 if [ ! -d "$DOWNLOAD_PATH" ]; then
-    rm -rf $DOWNLOAD_PATH
     mkdir $DOWNLOAD_PATH
 
     # First of all download all images from flickr

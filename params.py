@@ -16,7 +16,7 @@ flags.DEFINE_string('img_to_preprocess', 'data/train/', 'Images to preprocess. F
 #
 # Data input
 #
-flags.DEFINE_string('train_dir', "log/", 'Directory to put the log data = Output.')
+flags.DEFINE_string('train_dir', "log", 'Directory to put the log data = Output.')
 flags.DEFINE_string('img_dir', 'data/train/', 'Base directory of data = Input (The folder name is the class id)')
 flags.DEFINE_integer('image_format', 0, '0 = JPEG, 1 = PNG')   
 
@@ -39,7 +39,7 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 # Training
 #
 flags.DEFINE_float('initial_learning_rate', 0.00001, 'Initial learning rate.')
-flags.DEFINE_integer('max_steps', 5000, 'Max. number of steps to run trainer.')
+flags.DEFINE_integer('max_steps', 3000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')
@@ -49,9 +49,15 @@ flags.DEFINE_boolean('fine_tune', True,
                             """If set, randomly initialize the final layer """
                             """of weights in order to train the network on a """
                             """new task.""")
+
+# Possible we restore from the previous generation (any fold or an own training run without a validation set)
 flags.DEFINE_string('pretrained_model_checkpoint_path', 'inception/data/inception-v3/model.ckpt-157585',
                            """If specified, restore this pretrained model """
                            """before beginning any training.""")
+
+flags.DEFINE_integer('generation', 0, 'Generation of network.')
+flags.DEFINE_integer('k_fold_cross_validation', 3, 'We wan a k-Fold cross validation.')
+flags.DEFINE_integer('cross_validation_iteration', 2, 'Current cross validation iteration.')
 
 
 #

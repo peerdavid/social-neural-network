@@ -421,10 +421,21 @@ def log_metric(log_file, name, val, dataset_name, step, summary_writer):
 # M A I N
 #   
 def main(argv=None):
+
+    if(len(argv) > 1):
+        FLAGS.generation = int(argv[1])
+        FLAGS.cross_validation_iteration = int(argv[2])
+    
+    # Set training dir for current fold
+    FLAGS.train_dir = "{0}/generation-{1}/k-{2}/".format(
+        FLAGS.train_dir,
+        FLAGS.generation,
+        FLAGS.cross_validation_iteration)
+
     # Prepare training folder
     if tf.gfile.Exists(FLAGS.train_dir):
-        #x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
-        x = "y"
+        x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
+        #x = "y"
         if x != "y":
             print("Finished...")
             return

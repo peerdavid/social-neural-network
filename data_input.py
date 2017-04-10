@@ -3,7 +3,10 @@ import tensorflow as tf
 from tensorflow.python.framework import ops
 from tensorflow.python.framework import dtypes
 import random
+import numpy as np
+import collections
 
+from sklearn.cross_validation import KFold 
 
 
 class DataSet(object):
@@ -30,20 +33,27 @@ def read_validation_and_train_image_batches(FLAGS, path):
        
     # Reads pathes of images together with their labels
     image_list, label_list, num_classes = read_labeled_image_list(path)
-    image_list, label_list = _shuffle_tow_arrays_together(image_list, label_list)   
-    
-    # Split into training and ing sets
-    abs_validation_size = (int)(len(image_list) * FLAGS.validation_size)
-    train_images = image_list[abs_validation_size:]
-    train_labels = label_list[abs_validation_size:]
-    validation_images = image_list[:abs_validation_size]
-    validation_labels = label_list[:abs_validation_size]
 
+    # ToDo: Load only images, that are not filtered by older generations
+
+    # Split into training and validation sets for fold k
+    kf = KFold(n=len(image_list), n_folds=FLAGS.k_fold_cross_validation, shuffle=True, random_state=7)
+    train_index, validation_index = list(kf)[FLAGS.cross_validation_iteration]
+    train_images = image_list[train_index]
+    train_labels = label_list[train_index]
+    validation_images = image_list[validation_index]
+    validation_labels = label_list[validation_index]
+
+    # Now shuffle images for better learning
+    train_images, train_labels = _shuffle_tow_arrays_together(train_images, train_labels)
+    validation_images, validation_labels = _shuffle_tow_arrays_together(validation_images, validation_labels)
+
+    # Check if dataset is still valid
     assert all(validation_image not in train_images for validation_image in validation_images), "Some images are contained in both, validation- and training-set." 
     assert len(train_images) == len(train_labels), "Length of train image list and train label list is different"
     assert len(validation_images) == len(validation_labels), "Length of validation image list and train label list is different"
 
-    # Create image and label batches
+    # Create image and label batches for stochastic gradient descent
     train_data_set = _create_batches(train_images, train_labels, FLAGS)
     validation_data_set = _create_batches(validation_images, validation_labels, FLAGS)
     train_data_set.num_classes = num_classes
@@ -51,7 +61,9 @@ def read_validation_and_train_image_batches(FLAGS, path):
 
     print("Num of classes: {0}".format(num_classes))
     print("Num of training images: {0}".format(train_data_set.size))
+    print("Num of training images per class: {0}".format(collections.Counter(train_labels)))
     print("Num of validation images: {0}".format(validation_data_set.size))
+    print("Num of validation images per class: {0}".format(collections.Counter(validation_labels)))
     print("Batch size: {0}".format(train_data_set.batch_size))
     print("-----------------------------\n")
 
@@ -86,7 +98,8 @@ def read_labeled_image_list(path):
             labels.append(int(label))
     
     assert len(filenames) == len(labels), "Supervised training => number of images and labels must be the same"
-    return filenames, labels, num_classes
+    return np.asarray(filenames), np.asarray(labels), num_classes
+
 
 
 def _shuffle_tow_arrays_together(a, b):

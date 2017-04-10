@@ -37,6 +37,8 @@ function main {
     # ToDo: Filter dataset with generation n
 
     # ToDo: Train generation n+1 with data filtered from generation n
+
+    # ToDo: Older generations are less important than "younger" generations
 }
 
 

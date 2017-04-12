@@ -56,13 +56,13 @@ flags.DEFINE_string('pretrained_model_checkpoint_path', 'inception/data/inceptio
                            """before beginning any training.""")
 
 flags.DEFINE_integer('k_fold_cross_validation', 3, 'We wan a k-Fold cross validation.')
-flags.DEFINE_integer('cross_validation_iteration', 2, 'Current cross validation iteration.')
+flags.DEFINE_integer('cross_validation_iteration', 0, 'Current cross validation iteration.')
 
 
 #
 # Generation
 #
-flags.DEFINE_integer('generation', 0, 'Current generation')
+flags.DEFINE_integer('generation', 1, 'Current generation')
 flags.DEFINE_string('generation_checkpoint', "log/generation-{0}/k-{1}/model.ckpt-2000", 'Use this checkpoint file to restore the values')
 flags.DEFINE_string('generation_experience_file', "log/generation-{0}/experience.txt", "WHat the gen x learned about the classes")
 flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_images.txt", "WHat the gen x learned about the classes")

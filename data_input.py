@@ -33,12 +33,12 @@ def read_image_batches_with_labels_from_path(FLAGS, path):
     return data_set
 
 
-def read_validation_and_train_image_batches(FLAGS, path):
+def read_validation_and_train_image_batches(FLAGS, path, blacklist):
     print("\nReading input images from {0}".format(path))
     print("-----------------------------")
        
     # Reads pathes of images together with their labels
-    image_list, label_list, num_classes = read_labeled_image_list(path)
+    image_list, label_list, num_classes = read_labeled_image_list(path, blacklist)
 
     # ToDo: Load only images, that are not filtered by older generations
 
@@ -92,6 +92,10 @@ def read_labeled_image_list(path, blacklist=None):
     Returns:
       List with all filenames and list with all labels
     """
+
+    if blacklist is None:
+        blacklist = []
+
     print("Reading images from %s" % path)
     filenames = []
     labels = []

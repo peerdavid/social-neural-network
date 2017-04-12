@@ -146,8 +146,19 @@ def train():
             'global_step', [],
             initializer=tf.constant_initializer(0), trainable=False)
 
+
+        
+        # If a generation already exists, learn from their experience about the data
+        if(FLAGS.generation > 0):
+            fathers_experience = FLAGS.generation - 1
+            experience_file = FLAGS.generation_experience_file.format(fathers_experience)
+            with open(experience_file, 'r') as file_handler:
+                invalid_images = [line.rstrip('\n') for line in file_handler]
+        else:
+            invalid_images = []
+
         # Read social network images
-        data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir)
+        data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
         train_dataset = data_sets.train
         validation_dataset = data_sets.validation
 

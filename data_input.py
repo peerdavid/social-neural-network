@@ -19,6 +19,12 @@ def read_image_batches_without_labels_from_file_list(image_list, FLAGS):
     data_set = _create_batches(image_list, label_list, FLAGS, num_images)
     return data_set
 
+def read_image_batches_with_labels_in_blacklist_from_path(FLAGS, path, blacklist):
+    image_list, label_list, num_classes = read_labeled_image_list(path, blacklist)
+    data_set = _create_batches(image_list, label_list, FLAGS)
+    data_set.num_classes = num_classes
+    return data_set
+
 
 def read_image_batches_with_labels_from_path(FLAGS, path):
     image_list, label_list, num_classes = read_labeled_image_list(path)
@@ -76,12 +82,13 @@ def read_validation_and_train_image_batches(FLAGS, path):
     return data_sets                  
 
 
-def read_labeled_image_list(path):
+def read_labeled_image_list(path, blacklist=None):
     """Reads images and labels from file system. Create a folder for each label and put 
        all images with this label into the sub folder (you don't need a label.txt etc.)
        Note: Images can be downloaded with datr - https://github.com/peerdavid/datr
     Args:
       path: Folder, which contains labels (folders) with images.
+      blacklist: Those images are not used (for example: experience from older generations etc.)
     Returns:
       List with all filenames and list with all labels
     """
@@ -94,7 +101,12 @@ def read_labeled_image_list(path):
         num_classes += 1
         subdir = path + label
         for image in os.listdir(subdir):
-            filenames.append("{0}/{1}".format(subdir, image))
+            filename = "{0}/{1}".format(subdir, image)
+            
+            if filename in blacklist:
+                continue
+            
+            filenames.append(filename)
             labels.append(int(label))
     
     assert len(filenames) == len(labels), "Supervised training => number of images and labels must be the same"
@@ -199,7 +211,7 @@ def _create_batches(image_list, label_list, FLAGS, validation=False):
         tf_images = ops.convert_to_tensor(image_list, dtype=dtypes.string)
         tf_labels = ops.convert_to_tensor(label_list, dtype=dtypes.int32)
         
-        input_queue = tf.train.slice_input_producer([tf_images, tf_labels], shuffle=True)
+        input_queue = tf.train.slice_input_producer([tf_images, tf_labels], shuffle=False)
 
         # Read images into queue
         if validation or not FLAGS.random_distortion:
@@ -214,11 +226,11 @@ def _create_batches(image_list, label_list, FLAGS, validation=False):
         # Create batches of images with n threads
         min_fraction_of_examples_in_queue = 0.4
         min_queue_examples = int(data_set.size * min_fraction_of_examples_in_queue)
-        data_set.images, data_set.labels = tf.train.shuffle_batch(
+        data_set.images, data_set.labels = tf.train.batch(
             [images, labels], 
             num_threads=FLAGS.num_threads,
             batch_size=data_set.batch_size,
-            min_after_dequeue=min_queue_examples, 
+            #min_after_dequeue=min_queue_examples, 
             capacity=min_queue_examples + 3 * data_set.batch_size)
 
     return data_set

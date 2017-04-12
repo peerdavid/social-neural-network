@@ -39,7 +39,7 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 # Training
 #
 flags.DEFINE_float('initial_learning_rate', 0.00001, 'Initial learning rate.')
-flags.DEFINE_integer('max_steps', 3000, 'Max. number of steps to run trainer.')
+flags.DEFINE_integer('max_steps', 2000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')
@@ -55,12 +55,19 @@ flags.DEFINE_string('pretrained_model_checkpoint_path', 'inception/data/inceptio
                            """If specified, restore this pretrained model """
                            """before beginning any training.""")
 
-flags.DEFINE_integer('generation', 0, 'Generation of network.')
 flags.DEFINE_integer('k_fold_cross_validation', 3, 'We wan a k-Fold cross validation.')
 flags.DEFINE_integer('cross_validation_iteration', 2, 'Current cross validation iteration.')
 
 
 #
+# Generation
+#
+flags.DEFINE_integer('generation', 0, 'Current generation')
+flags.DEFINE_string('generation_checkpoint', "log/generation-{0}/k-{1}/model.ckpt-2000", 'Use this checkpoint file to restore the values')
+flags.DEFINE_string('generation_experience_file', "log/generation-{0}/experience.txt", "WHat the gen x learned about the classes")
+flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_images.txt", "WHat the gen x learned about the classes")
+
+#
 # Evaluation
 #
-flags.DEFINE_string('checkpoint', "log/model.ckpt-3000", 'Use this checkpoint file to restore the values')
+flags.DEFINE_string('checkpoint', "log/generation-0/k-0/model.ckpt-2000", 'Use this checkpoint file to restore the values')

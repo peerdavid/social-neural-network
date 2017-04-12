@@ -40,6 +40,19 @@
 				"WaitOnNormalExit",
 				"RedirectOutput"
 			]
+		},
+		{
+			"name": "nextgen.py",
+			"type": "python",
+			"request": "launch",
+			"stopOnEntry": false,
+			"program": "${workspaceRoot}/nextgen.py",
+			"pythonPath": "/usr/bin/python3",
+			"debugOptions": [
+				"WaitOnAbnormalExit",
+				"WaitOnNormalExit",
+				"RedirectOutput"
+			]
 		}
 	]
 }

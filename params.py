@@ -27,7 +27,7 @@ flags.DEFINE_integer('orig_image_height', 366, 'Height in pixels before random c
 flags.DEFINE_integer('image_width', 299, 'Width in pixels of input image.')
 flags.DEFINE_integer('image_height', 299, 'Height in pixels of input image.')
 
-flags.DEFINE_integer('batch_size', 32, 'Size of a single training batch.')
+flags.DEFINE_integer('batch_size', 42, 'Size of a single training batch.')
 flags.DEFINE_boolean('random_distortion', True, 'Many random distortions applied to the image.')    
 flags.DEFINE_integer('image_depth', 3, '1 = grayscale, 3 = rgb')
 flags.DEFINE_integer('num_threads', 2, 'Number of threads to fill queue of batches')
@@ -38,14 +38,14 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 #
 # Training
 #
-flags.DEFINE_float('initial_learning_rate', 0.00001, 'Initial learning rate.')
-flags.DEFINE_integer('max_steps', 3000, 'Max. number of steps to run trainer.')
+flags.DEFINE_float('initial_learning_rate', 0.01, 'Initial learning rate.')
+flags.DEFINE_integer('max_steps', 30000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')
-flags.DEFINE_float('label_smoothing', 0.1, 'Smooth cross entropy by this factor if the dataset is inbalanced')
+flags.DEFINE_float('label_smoothing', 0.1, 'Smooth cross entropy by this factor if the dataset is imbalanced')
 
-flags.DEFINE_boolean('fine_tune', True,
+flags.DEFINE_boolean('fine_tune', False,
                             """If set, randomly initialize the final layer """
                             """of weights in order to train the network on a """
                             """new task.""")

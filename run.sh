@@ -8,7 +8,7 @@
 # Configuration
 CLASSES=("$@")
 DOWNLOAD_PATH="data/train"
-NUM_IMAGES=1000
+NUM_IMAGES=4000
 
 
 function main {
@@ -26,7 +26,7 @@ function main {
     fi
 
     # Finished with the dataset, so train the model
-    tensorboard --logdir log &> /dev/null &
+    # tensorboard --logdir log &> /dev/null &
 
     # Train generation 0
     LD_PRELOAD="/usr/lib/libtcmalloc.so" python3 train.py 0 0

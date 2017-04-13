@@ -17,7 +17,7 @@ def main(argv):
         use_free_text=False, 
         license="", 
         max_num_img=max_num_images, 
-        num_threads=15, 
+        num_threads=20, 
         image_size="m")
 
 

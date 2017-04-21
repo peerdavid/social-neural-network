@@ -282,7 +282,7 @@ def train():
         sess.run(tf.local_variables_initializer())
         sess.run(init)
 
-        if FLAGS.pretrained_model_checkpoint_path and FLAGS.fine_tune:
+        if FLAGS.fine_tune:
             assert tf.gfile.Exists(FLAGS.pretrained_model_checkpoint_path)
             variables_to_restore = tf.get_collection(
                 slim.variables.VARIABLES_TO_RESTORE)
@@ -337,7 +337,7 @@ def train():
                     summary_writer.add_summary(summary_str[0], step)
 
                 # Validate training and validation sets
-                if step % 1000 == 0:
+                if step % 500 == 0:
                     validate(log_file, sess, "Validation", images_pl, labels_pl, for_training_pl, validation_dataset, 
                              summary_writer, step, prediction)
                     validate(log_file, sess, "Training", images_pl, labels_pl, for_training_pl, train_dataset, 

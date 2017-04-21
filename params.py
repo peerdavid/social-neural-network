@@ -27,7 +27,7 @@ flags.DEFINE_integer('orig_image_height', 366, 'Height in pixels before random c
 flags.DEFINE_integer('image_width', 299, 'Width in pixels of input image.')
 flags.DEFINE_integer('image_height', 299, 'Height in pixels of input image.')
 
-flags.DEFINE_integer('batch_size', 42, 'Size of a single training batch.')
+flags.DEFINE_integer('batch_size', 32, 'Size of a single training batch.')
 flags.DEFINE_boolean('random_distortion', True, 'Many random distortions applied to the image.')    
 flags.DEFINE_integer('image_depth', 3, '1 = grayscale, 3 = rgb')
 flags.DEFINE_integer('num_threads', 2, 'Number of threads to fill queue of batches')
@@ -38,14 +38,14 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 #
 # Training
 #
-flags.DEFINE_float('initial_learning_rate', 0.01, 'Initial learning rate.')
-flags.DEFINE_integer('max_steps', 30000, 'Max. number of steps to run trainer.')
+flags.DEFINE_float('initial_learning_rate', 0.0001, 'Initial learning rate.')
+flags.DEFINE_integer('max_steps', 3000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')
 flags.DEFINE_float('label_smoothing', 0.1, 'Smooth cross entropy by this factor if the dataset is imbalanced')
 
-flags.DEFINE_boolean('fine_tune', False,
+flags.DEFINE_boolean('fine_tune', True,
                             """If set, randomly initialize the final layer """
                             """of weights in order to train the network on a """
                             """new task.""")
@@ -56,13 +56,13 @@ flags.DEFINE_string('pretrained_model_checkpoint_path', 'inception/data/inceptio
                            """before beginning any training.""")
 
 flags.DEFINE_integer('k_fold_cross_validation', 3, 'We wan a k-Fold cross validation.')
-flags.DEFINE_integer('cross_validation_iteration', 0, 'Current cross validation iteration.')
+flags.DEFINE_integer('cross_validation_iteration', 1, 'Current cross validation iteration.')
 
 
 #
 # Generation
 #
-flags.DEFINE_integer('generation', 0, 'Current generation')
+flags.DEFINE_integer('generation', 1, 'Current generation')
 flags.DEFINE_string('generation_checkpoint', "log/generation-{0}/k-{1}/model.ckpt-2000", 'Use this checkpoint file to restore the values')
 flags.DEFINE_string('generation_experience_file', "log/generation-{0}/experience.txt", "WHat the gen x learned about the classes")
 flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_images.txt", "WHat the gen x learned about the classes")
@@ -70,4 +70,4 @@ flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_ima
 #
 # Evaluation
 #
-flags.DEFINE_string('checkpoint', "log/generation-0/k-0/model.ckpt-2000", 'Use this checkpoint file to restore the values')
+flags.DEFINE_string('checkpoint', "log/generation-1/k-1/model.ckpt-2000", 'Use this checkpoint file to restore the values')

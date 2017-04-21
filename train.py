@@ -1,370 +1,122 @@
-
-
-#
-# Social Neural Network
-#
-# 2017 - Peer David
-#
-
 #
 # Start training with
 # LD_PRELOAD="/usr/lib/libtcmalloc.so" python3 train.py
 #
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
 
 import sys
-import copy
-from datetime import datetime
-import os.path
-import re
+import os
+import traceback
 import time
+import numpy as np
+from datetime import datetime
 from six.moves import xrange
 
-import numpy as np
 import tensorflow as tf
+from sklearn import metrics
 
-import data_input
 import params
+import data_input
+import model
 import utils
 
-from inception import inception_model as inception
-from inception.slim import slim
-from shutil import copyfile
-
-from sklearn import metrics
 
 FLAGS = params.FLAGS
 
 
-def _tower_loss(images, labels, for_training, num_classes, scope):
-    """Calculate the total loss on a single tower running the ImageNet model.
-    We perform 'batch splitting'. This means that we cut up a batch across
-    multiple GPU's. For instance, if the batch size = 32 and num_gpus = 2,
-    then each tower will operate on an batch of 16 images.
+#
+# Helper functions
+#          
+def _create_train_loss(logits, labels):
+    """Add L2Loss to all the trainable variables.
+    Add summary for "Loss" and "Loss/avg".
     Args:
-      images: Images. 4D tensor of size [batch_size, FLAGS.image_size,
-                                        FLAGS.image_size, 3].
-      labels: 1-D integer Tensor of [batch_size].
-      num_classes: number of classes
-      scope: unique prefix string identifying the ImageNet tower, e.g.
-        'tower_0'.
+        logits: Logits from inference().
+        labels: Labels from distorted_inputs or inputs(). 1-D tensor
+                of shape [batch_size]
     Returns:
-      Tensor of shape [] containing the total loss for a batch of data
+        Loss tensor of type float.
     """
-    # When fine-tuning a model, we do not restore the logits but instead we
-    # randomly initialize the logits. The number of classes in the output of the
-    # logit is the number of classes in specified Dataset.
-    restore_logits = not FLAGS.fine_tune
+    # Calculate the average cross entropy loss across the batch.
+    labels = tf.cast(labels, tf.int64)
+    cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
+        logits=logits, labels=labels, name='cross_entropy_per_example')
+    cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
+    tf.add_to_collection('losses', cross_entropy_mean)
 
-    # Build inference Graph.
-    logits = inception.inference(images, num_classes, for_training=for_training,
-                                 restore_logits=restore_logits,
-                                 dropout_keep_prob=FLAGS.dropout_keep_prob,
-                                 scope=scope)
+    # The total loss is defined as the cross entropy loss plus all of the weight
+    # decay terms (L2 loss).
+    return tf.add_n(tf.get_collection('losses'), name='loss_total')
+    
 
-    # Build the portion of the Graph calculating the losses. Note that we will
-    # assemble the total_loss using a custom function below.
-    split_batch_size = images.get_shape().as_list()[0]
-    inception.loss(logits, labels, FLAGS.label_smoothing, batch_size=split_batch_size)
 
-    # Assemble all of the losses for the current tower only.
-    losses = tf.get_collection(slim.losses.LOSSES_COLLECTION, scope)
+def _create_adam_train_op(total_loss, global_step):
+    """Train CIFAR-10 model.
+    Create an optimizer and apply to all trainable variables. Add moving
+    average for all trainable variables.
+    Args:
+        total_loss: Total loss from loss().
+        global_step: Integer Variable counting the number of training steps processed.
+    Returns:
+        train_op: adam op for training.
+    """
 
-    # Calculate the total loss for the current tower.
-    regularization_losses = tf.get_collection(tf.GraphKeys.REGULARIZATION_LOSSES)
-    total_loss = tf.add_n(losses + regularization_losses, name='total_loss')
+    # Generate moving averages of all losses and associated summaries.
+    loss_averages_op = _add_loss_summaries(total_loss)
 
+    # Compute gradients.
+    with tf.control_dependencies([loss_averages_op]):
+        opt = tf.train.AdamOptimizer(FLAGS.initial_learning_rate)
+        grads = opt.compute_gradients(total_loss)
+
+    # Apply gradients.
+    apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
+
+    # Add histograms for trainable variables.
+    for var in tf.trainable_variables():
+        tf.summary.histogram(var.op.name, var)
+
+    # Add histograms for gradients.
+    for grad, var in grads:
+        if grad is not None:
+            tf.summary.histogram(var.op.name + '/gradients', grad)
+        
+    # Track the moving averages of all trainable variables.
+    variable_averages = tf.train.ExponentialMovingAverage(
+        FLAGS.moving_average_decay, global_step)
+    variables_averages_op = variable_averages.apply(tf.trainable_variables())
+
+    with tf.control_dependencies([apply_gradient_op, variables_averages_op]):
+        ret = tf.no_op(name='train')
+
+    return ret
+
+  
+def _add_loss_summaries(total_loss):
+    """Add summaries for losses in CIFAR-10 model.
+    Generates moving average for all losses and associated summaries for
+    visualizing the performance of the network.
+    Args:
+        total_loss: Total loss from loss().
+    Returns:
+        loss_averages_op: op for generating moving averages of losses.
+    """
     # Compute the moving average of all individual losses and the total loss.
     loss_averages = tf.train.ExponentialMovingAverage(0.9, name='avg')
+    losses = tf.get_collection('losses')
     loss_averages_op = loss_averages.apply(losses + [total_loss])
 
-    # Attach a scalar summmary to all individual losses and the total loss; do the
+    # Attach a scalar summary to all individual losses and the total loss; do the
     # same for the averaged version of the losses.
     for l in losses + [total_loss]:
-        # Remove 'tower_[0-9]/' from the name in case this is a multi-GPU training
-        # session. This helps the clarity of presentation on TensorBoard.
-        loss_name = re.sub('%s_[0-9]*/' % inception.TOWER_NAME, '', l.op.name)
         # Name each loss as '(raw)' and name the moving average version of the loss
         # as the original loss name.
-        tf.summary.scalar(loss_name +' (raw)', l)
-        tf.summary.scalar(loss_name, loss_averages.average(l))
+        tf.summary.scalar(l.op.name + " (raw)", l)
+        tf.summary.scalar(l.op.name + " (avg)", loss_averages.average(l))
 
-    with tf.control_dependencies([loss_averages_op]):
-        total_loss = tf.identity(total_loss)
-    return total_loss, logits
+    return loss_averages_op
 
 
-def _log_line(f, msg):
-    f.write("{0} \n".format(msg))
-    print(msg)
-
-
-def _average_gradients(tower_grads):
-    """Calculate the average gradient for each shared variable across all towers.
-    Note that this function provides a synchronization point across all towers.
-    Args:
-      tower_grads: List of lists of (gradient, variable) tuples. The outer list
-        is over individual gradients. The inner list is over the gradient
-        calculation for each tower.
-    Returns:
-      List of pairs of (gradient, variable) where the gradient has been averaged
-      across all towers.
-    """
-    average_grads = []
-    for grad_and_vars in zip(*tower_grads):
-        # Note that each grad_and_vars looks like the following:
-        #   ((grad0_gpu0, var0_gpu0), ... , (grad0_gpuN, var0_gpuN))
-        grads = []
-        for g, _ in grad_and_vars:
-            # Add 0 dimension to the gradients to represent the tower.
-            expanded_g = tf.expand_dims(g, 0)
-
-            # Append on a 'tower' dimension which we will average over below.
-            grads.append(expanded_g)
-
-        # Average over the 'tower' dimension.
-        grad = tf.concat(grads, 0)
-        grad = tf.reduce_mean(grad, 0)
-
-        # Keep in mind that the Variables are redundant because they are shared
-        # across towers. So .. we will just return the first tower's pointer to
-        # the Variable.
-        v = grad_and_vars[0][1]
-        grad_and_var = (grad, v)
-        average_grads.append(grad_and_var)
-    return average_grads
-
-
-def train():
-    """Train on dataset for a number of steps."""
-    with tf.Graph().as_default(), tf.device('/cpu:0'):
-        # Create a variable to count the number of train() calls. This equals the
-        # number of batches processed * FLAGS.num_gpus.
-        global_step = tf.get_variable(
-            'global_step', [],
-            initializer=tf.constant_initializer(0), trainable=False)
-
-
-        
-        # If a generation already exists, learn from their experience about the data
-        if(FLAGS.generation > 0):
-            fathers_experience = FLAGS.generation - 1
-            experience_file = FLAGS.generation_experience_file.format(fathers_experience)
-            with open(experience_file, 'r') as file_handler:
-                invalid_images = [line.rstrip('\n') for line in file_handler]
-        else:
-            invalid_images = []
-
-        # Read social network images
-        data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
-        train_dataset = data_sets.train
-        validation_dataset = data_sets.validation
-
-        # Log images
-        f = open(FLAGS.train_dir + "train_images.txt", "w")
-        f.write("\n".join(train_dataset.image_list))
-        f.close()
-
-        f = open(FLAGS.train_dir + "validation_images.txt", "w")
-        f.write("\n".join(validation_dataset.image_list))
-        f.close()
-
-        # Create placeholder
-        images_pl, labels_pl, for_training_pl = utils.create_fine_tune_placeholder( 
-                FLAGS.image_height, 
-                FLAGS.image_width,
-                FLAGS.image_depth)
-
-        # Create an optimizer that performs gradient descent.
-        opt = tf.train.AdamOptimizer(FLAGS.initial_learning_rate)
-
-        input_summaries = copy.copy(tf.get_collection(tf.GraphKeys.SUMMARIES))
-
-        # Calculate the gradients for each model tower.
-        tower_grads = []
-
-        with tf.device('/gpu:0'):
-            with tf.name_scope('gpu_0') as scope:
-                # Force all Variables to reside on the CPU.
-                with slim.arg_scope([slim.variables.variable], device='/cpu:0'):
-                    # Calculate the loss for one tower of the ImageNet model. This
-                    # function constructs the entire ImageNet model but shares the
-                    # variables across all towers.
-                    loss, logits = _tower_loss(images_pl,
-                                            labels_pl,
-                                            for_training_pl,
-                                            train_dataset.num_classes,
-                                            scope)
-
-                # Reuse variables for the next tower.
-                # tf.get_variable_scope().reuse_variables()
-
-                # Retain the summaries from the final tower.
-                summaries = tf.get_collection(tf.GraphKeys.SUMMARIES, scope)
-
-                # Retain the Batch Normalization updates operations only from
-                # the final tower. Ideally, we should grab the updates from
-                # all towers but these stats accumulate extremely fast so we
-                # can ignore the other stats from the other towers without
-                # significant detriment.
-                batchnorm_updates = tf.get_collection(
-                    slim.ops.UPDATE_OPS_COLLECTION, scope)
-
-                # Calculate the gradients for the batch of data on this ImageNet
-                # tower.
-                grads = opt.compute_gradients(loss)
-
-                # Keep track of the gradients across all towers.
-                tower_grads.append(grads)
-
-        # We must calculate the mean of each gradient. Note that this is the
-        # synchronization point across all towers.
-        grads = _average_gradients(tower_grads)
-
-        # Add a summaries for the input processing and global_step.
-        summaries.extend(input_summaries)
-
-        # Calculate accuracy via sklearn => we need a prediction 
-        prediction = tf.argmax(logits[0], 1)
-
-        # Add histograms for gradients.
-        for grad, var in grads:
-            if grad is not None:
-                summaries.append(
-                    tf.summary.histogram(var.op.name + '/gradients', grad))
-
-        # Apply the gradients to adjust the shared variables.
-        apply_gradient_op = opt.apply_gradients(grads, global_step=global_step)
-
-        # Add histograms for trainable variables.
-        for var in tf.trainable_variables():
-            summaries.append(tf.summary.histogram(var.op.name, var))
-
-        # Track the moving averages of all trainable variables.
-        # Note that we maintain a "double-average" of the BatchNormalization
-        # global statistics. This is more complicated then need be but we employ
-        # this for backward-compatibility with our previous models.
-        variable_averages = tf.train.ExponentialMovingAverage(
-            inception.MOVING_AVERAGE_DECAY, global_step)
-
-        # Another possiblility is to use tf.slim.get_variables().
-        variables_to_average = (tf.trainable_variables() +
-                                tf.moving_average_variables())
-        variables_averages_op = variable_averages.apply(variables_to_average)
-
-        # Group all updates to into a single train op.
-        batchnorm_updates_op = tf.group(*batchnorm_updates)
-        train_op = tf.group(apply_gradient_op, variables_averages_op,
-                            batchnorm_updates_op)
-
-        # Create a saver.
-        saver = tf.train.Saver(tf.global_variables())
-
-        # Show some training and validation images
-        summaries.append(tf.summary.image('Training Images', train_dataset.images, max_outputs = 5))
-        summaries.append(tf.summary.image('Validation Images', validation_dataset.images, max_outputs = 5))
-
-        # Build the summary operation from the last tower summaries.
-        summary_op = tf.summary.merge(summaries)
-
-        # Build an initialization operation to run below.
-        init = tf.global_variables_initializer()
-
-        # Start running operations on the Graph. allow_soft_placement must be set to
-        # True to build towers on GPU, as some of the ops do not have GPU
-        # implementations.
-        sess = tf.Session(config=tf.ConfigProto(
-            allow_soft_placement=True,
-            log_device_placement=False))
-
-        sess.run(tf.local_variables_initializer())
-        sess.run(init)
-
-        if FLAGS.fine_tune:
-            assert tf.gfile.Exists(FLAGS.pretrained_model_checkpoint_path)
-            variables_to_restore = tf.get_collection(
-                slim.variables.VARIABLES_TO_RESTORE)
-            restorer = tf.train.Saver(variables_to_restore)
-            restorer.restore(sess, FLAGS.pretrained_model_checkpoint_path)
-            print('%s: Pre-trained model restored from %s' %
-                  (datetime.now(), FLAGS.pretrained_model_checkpoint_path))
-
-        # Start the queue runners.
-        coord = tf.train.Coordinator()
-        threads = tf.train.start_queue_runners(sess=sess, coord=coord)
-
-        summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
-
-        # Ensure, that no nodes are added to our computation graph.
-        # Otherwise the learning will slow down dramatically
-        tf.get_default_graph().finalize()
-
-        log_file = open(FLAGS.train_dir + "Console.log", "w")
-
-        try:
-            for step in range(FLAGS.max_steps+1):
-                if coord.should_stop():
-                        break
-
-                # Get data from queue and measure time
-                start_time = time.time()
-                train_feed = utils.create_fine_tune_feed_data(sess, images_pl, labels_pl, for_training_pl, 
-                                                              train_dataset, for_train_r=True)
-                # Now train our model
-                _, loss_value = sess.run([train_op, loss], train_feed)
-                duration = time.time() - start_time
-
-                assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
-
-                # Print short summary every n steps
-                if step % 10 == 0:
-                    steps_per_epoch = train_dataset.size // train_dataset.batch_size
-                    epoch = int(step / steps_per_epoch) + 1
-                    num_examples_per_step = train_dataset.batch_size
-                    examples_per_sec = num_examples_per_step / duration
-                    sec_per_batch = float(duration)
-
-                    _log_line(log_file, '%s: step %d, epoch %d | loss = %.6f (%.1f examples/sec; %.3f '
-                          'sec/batch)' % (datetime.now(), step, epoch, loss_value,
-                                          examples_per_sec, sec_per_batch))
-                
-                # Write summary to tensorboard
-                if step % 100 == 0:
-                    log_file.flush()
-                    summary_str = sess.run([summary_op], train_feed)
-                    summary_writer.add_summary(summary_str[0], step)
-
-                # Validate training and validation sets
-                if step % 500 == 0:
-                    validate(log_file, sess, "Validation", images_pl, labels_pl, for_training_pl, validation_dataset, 
-                             summary_writer, step, prediction)
-                    validate(log_file, sess, "Training", images_pl, labels_pl, for_training_pl, train_dataset, 
-                             summary_writer, step, prediction)
-
-                # Save the model checkpoint periodically.
-                if step % 1000 == 0 and step != 0:
-                    _log_line(log_file, "Saving checkpoint file...")
-                    checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-                    saver.save(sess, checkpoint_path, global_step=step)
-
-        except tf.errors.OutOfRangeError:
-            checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
-            saver.save(sess, checkpoint_path, global_step=global_step)
-            print('Done training for %d epochs, %d steps.' % (FLAGS.num_epochs, step))
-
-        finally:
-            # Finished
-            log_file.close()
-            print("\nWaiting for all threads...")
-            coord.request_stop()
-            coord.join(threads)
-            print("Closing session...\n")
-            sess.close()
-
-
-def validate(log_file, sess, dataset_name, images_pl, labels_pl, for_training_pl, dataset, summary_writer, train_step, prediction):
+def validate(log_file, sess, dataset_name, images_pl, labels_pl, dropout_pl, dataset, summary_writer, train_step, prediction):
     """
     Measure different metrics, print a report and write the values to tensorboard
     """
@@ -374,7 +126,7 @@ def validate(log_file, sess, dataset_name, images_pl, labels_pl, for_training_pl
     y_pred = []
     steps_per_epoch = dataset.size // dataset.batch_size
     for pred_step in xrange(steps_per_epoch):
-        feed_dict = utils.create_fine_tune_feed_data(sess, images_pl, labels_pl, for_training_pl, dataset, for_train_r=False)
+        feed_dict = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, dataset, 1.0)
         y_true.extend(feed_dict[labels_pl])
         y_pred.extend(sess.run([prediction], feed_dict=feed_dict)[0])
         sys.stdout.write("  Calculating predictions for %s...%d%%\r" % (dataset_name, pred_step * 100 / steps_per_epoch))
@@ -428,33 +180,164 @@ def log_metric(log_file, name, val, dataset_name, step, summary_writer):
     summary_val = tf.Summary(value=[tf.Summary.Value(tag="{0} {1}".format(name, dataset_name), simple_value=val)])
     summary_writer.add_summary(summary_val, step) 
 
+
+def _log_line(f, msg):
+    f.write("{0} \n".format(msg))
+    print(msg)
+
+
 #
 # M A I N
 #   
 def main(argv=None):
+    try:
+        
+        # Create log dir if not exists
+        if tf.gfile.Exists(FLAGS.train_dir):
+            x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
+            if x != "y":
+                print("Finished...")
+                return
 
-    if(len(argv) > 1):
-        FLAGS.generation = int(argv[1])
-        FLAGS.cross_validation_iteration = int(argv[2])
-    
-    # Set training dir for current fold
-    FLAGS.train_dir = "{0}/generation-{1}/k-{2}/".format(
-        FLAGS.train_dir,
-        FLAGS.generation,
-        FLAGS.cross_validation_iteration)
+            tf.gfile.DeleteRecursively(FLAGS.train_dir)
+        tf.gfile.MakeDirs(FLAGS.train_dir)
 
-    # Prepare training folder
-    if tf.gfile.Exists(FLAGS.train_dir):
-        x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
-        #x = "y"
-        if x != "y":
-            print("Finished...")
-            return
-        tf.gfile.DeleteRecursively(FLAGS.train_dir)
-    tf.gfile.MakeDirs(FLAGS.train_dir)
 
-    # Train cnn
-    train()
+        # Tell TensorFlow that the model will be built into the default Graph.
+        with tf.Graph().as_default():
+            # ToDo: Use generation file
+            invalid_images = [] 
+            data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
+            train_data_set = data_sets.train
+            validation_data_set = data_sets.validation
+            
+            images_pl, labels_pl, dropout_pl = utils.create_placeholder_inputs( 
+                FLAGS.image_height, 
+                FLAGS.image_width,
+                FLAGS.image_depth)
+                    
+            # Build a Graph that computes predictions from the inference model.
+            # We use the same weight's etc. for the training and validation
+            logits = model.inference(
+                images_pl, 
+                train_data_set.num_classes,
+                FLAGS.image_depth,
+                dropout_pl)
+            
+            # Add graph and placeholder to meta file
+            tf.add_to_collection('logits', logits)
+                            
+            # Accuracy
+            prediction = tf.argmax(logits, 1)
+
+            # Add to the Graph the Ops for loss calculation.
+            train_loss = _create_train_loss(logits, labels_pl)
+
+            # Add to the Graph the Ops that calculate and apply gradients.
+            global_step = tf.Variable(0, trainable=False)
+
+            # Initialize optimizer
+            train_op = _create_adam_train_op(train_loss, global_step)
+
+            # Create a saver for writing training checkpoints.
+            saver = tf.train.Saver(tf.all_variables(), max_to_keep=10)
+
+            # Add tensorboard summaries
+            tf.summary.image('image_train', train_data_set.images, max_outputs = 5)
+            tf.summary.image('image_validation', validation_data_set.images, max_outputs = 5)
+
+            # Build the summary operation based on the TF collection of Summaries.
+            summary_op = tf.summary.merge_all()
+            
+            # Add the variable initializer Op.
+            init = tf.initialize_all_variables()
+            
+            # Create a session for running Ops on the Graph.
+            sess = tf.Session()
+
+            # And then after everything is built:
+            # Run the Op to initialize the variables.
+            sess.run(init)
+
+            # Start the queue runners.
+            coord = tf.train.Coordinator()
+            threads = tf.train.start_queue_runners(sess=sess, coord=coord)
+
+            # Instantiate a SummaryWriter to output summaries and the Graph.
+            summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+            
+            # Ensure, that no nodes are added to our computation graph.
+            # Otherwise the learning will slow down dramatically
+            tf.get_default_graph().finalize()
+
+            log_file = open(FLAGS.train_dir + "Console.log", "w")
+
+            #
+            # Training loop
+            #
+            try:
+                for step in xrange(FLAGS.max_steps):
+                    if coord.should_stop():
+                        break
+                        
+                    start_time = time.time()
+                    
+                    train_feed = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, train_data_set, FLAGS.dropout_keep_prob)
+                    _, loss_value = sess.run([train_op, train_loss], feed_dict=train_feed)
+                    assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
+
+                    duration = time.time() - start_time
+
+                    # Print step loss etc. to console
+                    if step % 10 == 0:
+                        steps_per_epoch = train_data_set.size // train_data_set.batch_size
+                        epoch = int(step / steps_per_epoch) + 1
+                        num_examples_per_step = train_data_set.batch_size
+                        examples_per_sec = num_examples_per_step / duration
+                        sec_per_batch = float(duration)
+
+                        print ('%s: step %d, epoch %d | loss = %.6f (%.1f examples/sec; %.3f '
+                                    'sec/batch)' % (datetime.now(), step, epoch, loss_value,
+                                    examples_per_sec, sec_per_batch))
+                    
+                    # Write summary to tensorboard
+                    if step % 100 == 0:
+                        log_file.flush()
+                        summary_str = sess.run([summary_op], feed_dict=train_feed)
+                        summary_writer.add_summary(summary_str[0], step)
+                        
+                    # Evaluation 
+                    if step % 500 == 0:
+                        validate(log_file, sess, "Validation", images_pl, labels_pl, dropout_pl, validation_data_set, 
+                             summary_writer, step, prediction)
+                        validate(log_file, sess, "Training", images_pl, labels_pl, dropout_pl, train_data_set, 
+                             summary_writer, step, prediction)
+
+                    # Save model checkpoint
+                    if (step % 1000 == 0) or (step >= FLAGS.max_steps -1):
+                        checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                        saver.save(sess, checkpoint_path, global_step=global_step)
+            
+            
+            except tf.errors.OutOfRangeError:
+                checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                saver.save(sess, checkpoint_path, global_step=global_step)
+                print('Done training for %d epochs, %d steps.' % (FLAGS.num_epochs, step))
+            
+            finally:
+                # Finished
+                log_file.close()
+                print("\nWaiting for all threads...")
+                coord.request_stop()
+                coord.join(threads)
+                print("Closing session...\n")
+                sess.close()
+
+    except:
+        traceback.print_exc()
+
+    finally:
+        print("\nDone.\n")
 
 
 if __name__ == '__main__':

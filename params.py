@@ -24,8 +24,8 @@ flags.DEFINE_string('test_dir', 'data/test/', 'Base directory of data = Input (T
 
 flags.DEFINE_integer('orig_image_width', 366, 'Width in pixels before random crop (only if random_distortion=True)')
 flags.DEFINE_integer('orig_image_height', 366, 'Height in pixels before random crop (only if random_distortion=True)')
-flags.DEFINE_integer('image_width', 299, 'Width in pixels of input image.')
-flags.DEFINE_integer('image_height', 299, 'Height in pixels of input image.')
+flags.DEFINE_integer('image_width', 224, 'Width in pixels of input image.')
+flags.DEFINE_integer('image_height', 224, 'Height in pixels of input image.')
 
 flags.DEFINE_integer('batch_size', 32, 'Size of a single training batch.')
 flags.DEFINE_boolean('random_distortion', True, 'Many random distortions applied to the image.')    
@@ -38,8 +38,9 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 #
 # Training
 #
+flags.DEFINE_float('moving_average_decay', 0.9999, 'The decay to use for the moving average.')
 flags.DEFINE_float('initial_learning_rate', 0.0001, 'Initial learning rate.')
-flags.DEFINE_integer('max_steps', 3000, 'Max. number of steps to run trainer.')
+flags.DEFINE_integer('max_steps', 20000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')

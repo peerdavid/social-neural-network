@@ -61,7 +61,7 @@ def read_validation_and_train_image_batches(FLAGS, path, blacklist):
 
     # Create image and label batches for stochastic gradient descent
     train_data_set = _create_batches(train_images, train_labels, FLAGS)
-    validation_data_set = _create_batches(validation_images, validation_labels, FLAGS)
+    validation_data_set = _create_batches(validation_images, validation_labels, FLAGS, validation=True)
     train_data_set.num_classes = num_classes
     validation_data_set.num_classes = num_classes
 
@@ -166,8 +166,14 @@ def _read_images(input_queue, FLAGS):
 def _read_distorted_images(input_queue, FLAGS):
     images, labels = _read_images(input_queue, FLAGS)
 
+    # Resize image
+    image_width = 260
+    image_height = 260
+    images = tf.image.resize_images(images, size=[image_height, image_width])
+    images.set_shape([image_height, image_width, FLAGS.image_depth])
+
     # Apply random distortions
-    images.set_shape([FLAGS.image_height, FLAGS.image_width, FLAGS.image_depth])
+    #images.set_shape([FLAGS.image_height, FLAGS.image_width, FLAGS.image_depth])
     images = tf.random_crop(images, [FLAGS.image_height, FLAGS.image_width, FLAGS.image_depth])
     images.set_shape([FLAGS.image_height, FLAGS.image_width, FLAGS.image_depth])
     images = tf.image.random_flip_left_right(images)

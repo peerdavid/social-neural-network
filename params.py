@@ -27,10 +27,10 @@ flags.DEFINE_integer('orig_image_height', 366, 'Height in pixels before random c
 flags.DEFINE_integer('image_width', 224, 'Width in pixels of input image.')
 flags.DEFINE_integer('image_height', 224, 'Height in pixels of input image.')
 
-flags.DEFINE_integer('batch_size', 256, 'Size of a single training batch.')
+flags.DEFINE_integer('batch_size', 128, 'Size of a single training batch.')
 flags.DEFINE_boolean('random_distortion', True, 'Many random distortions applied to the image.')    
 flags.DEFINE_integer('image_depth', 3, '1 = grayscale, 3 = rgb')
-flags.DEFINE_integer('num_threads', 4, 'Number of threads to fill queue of batches')
+flags.DEFINE_integer('num_threads', 2, 'Number of threads to fill queue of batches')
 
 flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue of batches')
 

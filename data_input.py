@@ -228,13 +228,12 @@ def _create_batches(image_list, label_list, FLAGS, validation=False):
         images = tf.multiply(images, 2.0)
 
         # Create batches of images with n threads
-        min_fraction_of_examples_in_queue = 0.4
-        min_queue_examples = int(data_set.size * min_fraction_of_examples_in_queue)
+        min_after_dequeue = int(0.4 * data_set.size)
+        capacity = min_after_dequeue + (FLAGS.num_threads + 10) * FLAGS.batch_size
         data_set.images, data_set.labels = tf.train.batch(
             [images, labels], 
             num_threads=FLAGS.num_threads,
             batch_size=data_set.batch_size,
-            #min_after_dequeue=min_queue_examples, 
-            capacity=min_queue_examples + 3 * data_set.batch_size)
+            capacity=100 * data_set.batch_size)
 
     return data_set

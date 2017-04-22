@@ -27,10 +27,10 @@ flags.DEFINE_integer('orig_image_height', 366, 'Height in pixels before random c
 flags.DEFINE_integer('image_width', 224, 'Width in pixels of input image.')
 flags.DEFINE_integer('image_height', 224, 'Height in pixels of input image.')
 
-flags.DEFINE_integer('batch_size', 32, 'Size of a single training batch.')
+flags.DEFINE_integer('batch_size', 256, 'Size of a single training batch.')
 flags.DEFINE_boolean('random_distortion', True, 'Many random distortions applied to the image.')    
 flags.DEFINE_integer('image_depth', 3, '1 = grayscale, 3 = rgb')
-flags.DEFINE_integer('num_threads', 2, 'Number of threads to fill queue of batches')
+flags.DEFINE_integer('num_threads', 4, 'Number of threads to fill queue of batches')
 
 flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue of batches')
 
@@ -39,8 +39,8 @@ flags.DEFINE_integer('validation_size', 0.33, 'Number of threads to fill queue o
 # Training
 #
 flags.DEFINE_float('moving_average_decay', 0.9999, 'The decay to use for the moving average.')
-flags.DEFINE_float('initial_learning_rate', 0.0001, 'Initial learning rate.')
-flags.DEFINE_integer('max_steps', 20000, 'Max. number of steps to run trainer.')
+flags.DEFINE_float('initial_learning_rate', 0.001, 'Initial learning rate.')
+flags.DEFINE_integer('max_steps', 50000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')
@@ -71,4 +71,4 @@ flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_ima
 #
 # Evaluation
 #
-flags.DEFINE_string('checkpoint', "log/generation-1/k-1/model.ckpt-2000", 'Use this checkpoint file to restore the values')
+flags.DEFINE_string('checkpoint', "_old_log/model.ckpt-5001", 'Use this checkpoint file to restore the values')

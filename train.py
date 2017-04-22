@@ -9,7 +9,6 @@ import traceback
 import time
 import numpy as np
 from datetime import datetime
-from six.moves import xrange
 
 import tensorflow as tf
 from sklearn import metrics
@@ -124,9 +123,10 @@ def validate(log_file, sess, dataset_name, images_pl, labels_pl, dropout_pl, dat
     # Create test dataset
     y_true = []
     y_pred = []
+    dropout_keep_propability = 1.0
     steps_per_epoch = dataset.size // dataset.batch_size
-    for pred_step in xrange(steps_per_epoch):
-        feed_dict = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, dataset, 1.0)
+    for pred_step in range(steps_per_epoch):
+        feed_dict = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, dataset, dropout_keep_propability)
         y_true.extend(feed_dict[labels_pl])
         y_pred.extend(sess.run([prediction], feed_dict=feed_dict)[0])
         sys.stdout.write("  Calculating predictions for %s...%d%%\r" % (dataset_name, pred_step * 100 / steps_per_epoch))
@@ -231,7 +231,7 @@ def main(argv=None):
             prediction = tf.argmax(logits, 1)
 
             # Add to the Graph the Ops for loss calculation.
-            train_loss = _create_train_loss(logits, labels_pl)
+            train_loss = _create_train_loss(logits, labels_pl)# train_data_set.labels)
 
             # Add to the Graph the Ops that calculate and apply gradients.
             global_step = tf.Variable(0, trainable=False)
@@ -270,13 +270,13 @@ def main(argv=None):
             # Otherwise the learning will slow down dramatically
             tf.get_default_graph().finalize()
 
-            log_file = open(FLAGS.train_dir + "Console.log", "w")
+            log_file = open(os.path.join(FLAGS.train_dir, 'console.log'), "w")
 
             #
             # Training loop
             #
             try:
-                for step in xrange(FLAGS.max_steps):
+                for step in range(FLAGS.max_steps):
                     if coord.should_stop():
                         break
                         
@@ -284,6 +284,7 @@ def main(argv=None):
                     
                     train_feed = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, train_data_set, FLAGS.dropout_keep_prob)
                     _, loss_value = sess.run([train_op, train_loss], feed_dict=train_feed)
+                    #_, loss_value = sess.run([train_op, train_loss])
                     assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
 
                     duration = time.time() - start_time
@@ -296,7 +297,7 @@ def main(argv=None):
                         examples_per_sec = num_examples_per_step / duration
                         sec_per_batch = float(duration)
 
-                        print ('%s: step %d, epoch %d | loss = %.6f (%.1f examples/sec; %.3f '
+                        _log_line(log_file, '%s: step %d, epoch %d | loss = %.6f (%.1f examples/sec; %.3f '
                                     'sec/batch)' % (datetime.now(), step, epoch, loss_value,
                                     examples_per_sec, sec_per_batch))
                     

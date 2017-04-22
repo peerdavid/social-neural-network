@@ -9,6 +9,7 @@ __pycache__/
 # Data folder with training data etc.
 data
 log
+_old_log
 
 # Distribution / packaging
 .Python

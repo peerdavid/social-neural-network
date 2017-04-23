@@ -37,6 +37,9 @@ def _create_train_loss(logits, labels):
     """
     # Calculate the average cross entropy loss across the batch.
     labels = tf.cast(labels, tf.int64)
+
+    # We use a softmax in our model to represent propability. So 
+    # the cross entropy ensures, that the learning is not getting too slow
     cross_entropy = tf.nn.sparse_softmax_cross_entropy_with_logits(
         logits=logits, labels=labels, name='cross_entropy_per_example')
     cross_entropy_mean = tf.reduce_mean(cross_entropy, name='cross_entropy')
@@ -80,11 +83,11 @@ def _create_adam_train_op(total_loss, global_step):
             tf.summary.histogram(var.op.name + '/gradients', grad)
         
     # Track the moving averages of all trainable variables.
-    variable_averages = tf.train.ExponentialMovingAverage(
-        FLAGS.moving_average_decay, global_step)
-    variables_averages_op = variable_averages.apply(tf.trainable_variables())
+    #variable_averages = tf.train.ExponentialMovingAverage(
+    #    FLAGS.moving_average_decay, global_step)
+    #variables_averages_op = variable_averages.apply(tf.trainable_variables())
 
-    with tf.control_dependencies([apply_gradient_op, variables_averages_op]):
+    with tf.control_dependencies([apply_gradient_op]): #, variables_averages_op]):
         ret = tf.no_op(name='train')
 
     return ret
@@ -186,31 +189,33 @@ def _log_line(f, msg):
     print(msg)
 
 
-#
-# M A I N
-#   
-def main(argv=None):
+def _train_model():
     try:
-        
-        # Create log dir if not exists
-        if tf.gfile.Exists(FLAGS.train_dir):
-            x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
-            if x != "y":
-                print("Finished...")
-                return
-
-            tf.gfile.DeleteRecursively(FLAGS.train_dir)
-        tf.gfile.MakeDirs(FLAGS.train_dir)
-
-
         # Tell TensorFlow that the model will be built into the default Graph.
         with tf.Graph().as_default():
-            # ToDo: Use generation file
-            invalid_images = [] 
-            data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
-            train_data_set = data_sets.train
-            validation_data_set = data_sets.validation
+            # If a generation already exists, learn from their experience about the data
+            if(FLAGS.generation > 0):
+                fathers_experience = FLAGS.generation - 1
+                experience_file = FLAGS.generation_experience_file.format(fathers_experience)
+                with open(experience_file, 'r') as file_handler:
+                    invalid_images = [line.rstrip('\n') for line in file_handler]
+            else:
+                invalid_images = []
+
+            # Read social network images
+            datasets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
+            train_dataset = datasets.train
+            validation_dataset = datasets.validation
             
+            # Log images
+            f = open(FLAGS.train_dir + "train_images.txt", "w")
+            f.write("\n".join(train_dataset.image_list))
+            f.close()
+
+            f = open(FLAGS.train_dir + "validation_images.txt", "w")
+            f.write("\n".join(validation_dataset.image_list))
+            f.close()
+
             images_pl, labels_pl, dropout_pl = utils.create_placeholder_inputs( 
                 FLAGS.image_height, 
                 FLAGS.image_width,
@@ -220,18 +225,18 @@ def main(argv=None):
             # We use the same weight's etc. for the training and validation
             logits = model.inference(
                 images_pl, 
-                train_data_set.num_classes,
+                train_dataset.num_classes,
                 FLAGS.image_depth,
                 dropout_pl)
             
             # Add graph and placeholder to meta file
             tf.add_to_collection('logits', logits)
                             
-            # Accuracy
+            # Prediction for accuracy, precision, recall and f1-score
             prediction = tf.argmax(logits, 1)
 
             # Add to the Graph the Ops for loss calculation.
-            train_loss = _create_train_loss(logits, labels_pl)# train_data_set.labels)
+            train_loss = _create_train_loss(logits, labels_pl)# train_dataset.labels)
 
             # Add to the Graph the Ops that calculate and apply gradients.
             global_step = tf.Variable(0, trainable=False)
@@ -243,8 +248,8 @@ def main(argv=None):
             saver = tf.train.Saver(tf.all_variables(), max_to_keep=10)
 
             # Add tensorboard summaries
-            tf.summary.image('image_train', train_data_set.images, max_outputs = 5)
-            tf.summary.image('image_validation', validation_data_set.images, max_outputs = 5)
+            tf.summary.image('image_train', train_dataset.images, max_outputs = 5)
+            tf.summary.image('image_validation', validation_dataset.images, max_outputs = 5)
 
             # Build the summary operation based on the TF collection of Summaries.
             summary_op = tf.summary.merge_all()
@@ -282,7 +287,7 @@ def main(argv=None):
                         
                     start_time = time.time()
                     
-                    train_feed = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, train_data_set, FLAGS.dropout_keep_prob)
+                    train_feed = utils.create_feed_data(sess, images_pl, labels_pl, dropout_pl, train_dataset, FLAGS.dropout_keep_prob)
                     _, loss_value = sess.run([train_op, train_loss], feed_dict=train_feed)
                     #_, loss_value = sess.run([train_op, train_loss])
                     assert not np.isnan(loss_value), 'Model diverged with loss = NaN'
@@ -291,9 +296,9 @@ def main(argv=None):
 
                     # Print step loss etc. to console
                     if step % 10 == 0:
-                        steps_per_epoch = train_data_set.size // train_data_set.batch_size
+                        steps_per_epoch = train_dataset.size // train_dataset.batch_size
                         epoch = int(step / steps_per_epoch) + 1
-                        num_examples_per_step = train_data_set.batch_size
+                        num_examples_per_step = train_dataset.batch_size
                         examples_per_sec = num_examples_per_step / duration
                         sec_per_batch = float(duration)
 
@@ -308,11 +313,11 @@ def main(argv=None):
                         summary_writer.add_summary(summary_str[0], step)
                         
                     # Evaluation 
-                    if step % 500 == 0:
-                        validate(log_file, sess, "Validation", images_pl, labels_pl, dropout_pl, validation_data_set, 
-                             summary_writer, step, prediction)
-                        validate(log_file, sess, "Training", images_pl, labels_pl, dropout_pl, train_data_set, 
-                             summary_writer, step, prediction)
+                    if step % 1000 == 0:
+                        validate(log_file, sess, "Validation", images_pl, labels_pl, dropout_pl, validation_dataset, 
+                                summary_writer, step, prediction)
+                        validate(log_file, sess, "Training", images_pl, labels_pl, dropout_pl, train_dataset, 
+                                summary_writer, step, prediction)
 
                     # Save model checkpoint
                     if (step % 1000 == 0) or (step >= FLAGS.max_steps -1):
@@ -339,6 +344,34 @@ def main(argv=None):
 
     finally:
         print("\nDone.\n")
+
+
+#
+# M A I N
+#   
+def main(argv=None):
+    if(len(argv) > 1):
+        FLAGS.generation = int(argv[1])
+        FLAGS.cross_validation_iteration = int(argv[2])
+
+    # Set training dir for current fold
+    FLAGS.train_dir = "{0}/generation-{1}/k-{2}/".format(
+        FLAGS.train_dir,
+        FLAGS.generation,
+        FLAGS.cross_validation_iteration)
+
+    # Create log dir if not exists
+    if tf.gfile.Exists(FLAGS.train_dir):
+        x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
+        if x != "y":
+            print("Finished...")
+            return
+
+        tf.gfile.DeleteRecursively(FLAGS.train_dir)
+    tf.gfile.MakeDirs(FLAGS.train_dir)
+
+    # Start training
+    _train_model()
 
 
 if __name__ == '__main__':

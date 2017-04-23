@@ -167,8 +167,8 @@ def _read_distorted_images(input_queue, FLAGS):
     images, labels = _read_images(input_queue, FLAGS)
 
     # Resize image
-    image_width = 260
-    image_height = 260
+    image_width = 280
+    image_height = 280
     images = tf.image.resize_images(images, size=[image_height, image_width])
     images.set_shape([image_height, image_width, FLAGS.image_depth])
 

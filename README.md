@@ -27,6 +27,10 @@ The challenge of this work is, that lots of examples are are invalid tagged. For
 the difference between beer and wine, we download images with those tags from social networks. Sometimes images
 of austrian guys are tagged with beer. Its funny but its not helpful for our network to learn, how a beer or a wine looks like.
 
+## Overview
+The following image shows an overview of all parts of the system:
+
+![System Overview](docs/system-overview.png)
 
 ## Data
 ToDo: Describe and cite datr

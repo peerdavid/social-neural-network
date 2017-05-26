@@ -1,11 +1,20 @@
 #!/bin/bash
 
-# 
-# Learn a neural network from social networks with different generations of the same model
+###########################################################
+# Author: Peer David
+# Date: 17.05.2017
+# Description: Learn a neural network from social networks with different generations of the same model
+# Steps:
+#   (1) Collect training data from social networks
+#   (2) Train model (generation-0) with all images (k-times for k-fold cross validation)
+#   (3) Write experience file -> delete all images that are wrong predicted
+#   (4) Train generation-1 with all images excluding all images that are wrong predicted by generation-0
+#   (5) Compare F1 for generation-0 and generation-1
+###########################################################
+
 #
-
-
 # Configuration
+#
 CLASSES=("$@")
 DOWNLOAD_PATH="data/train"
 NUM_IMAGES=4000

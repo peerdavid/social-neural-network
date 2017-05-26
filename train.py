@@ -82,11 +82,6 @@ def _create_adam_train_op(total_loss, global_step):
         if grad is not None:
             tf.summary.histogram(var.op.name + '/gradients', grad)
         
-    # Track the moving averages of all trainable variables.
-    #variable_averages = tf.train.ExponentialMovingAverage(
-    #    FLAGS.moving_average_decay, global_step)
-    #variables_averages_op = variable_averages.apply(tf.trainable_variables())
-
     with tf.control_dependencies([apply_gradient_op]): #, variables_averages_op]):
         ret = tf.no_op(name='train')
 
@@ -203,16 +198,16 @@ def _train_model():
                 invalid_images = []
 
             # Read social network images
-            data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
+            data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.train_dir, invalid_images)
             train_dataset = data_sets.train
             validation_dataset = data_sets.validation
             
             # Log images
-            f = open(FLAGS.train_dir + "train_images.txt", "w")
+            f = open(FLAGS.log_dir + "train_images.txt", "w")
             f.write("\n".join(train_dataset.image_list))
             f.close()
 
-            f = open(FLAGS.train_dir + "validation_images.txt", "w")
+            f = open(FLAGS.log_dir + "validation_images.txt", "w")
             f.write("\n".join(validation_dataset.image_list))
             f.close()
 
@@ -269,13 +264,13 @@ def _train_model():
             threads = tf.train.start_queue_runners(sess=sess, coord=coord)
 
             # Instantiate a SummaryWriter to output summaries and the Graph.
-            summary_writer = tf.summary.FileWriter(FLAGS.train_dir, sess.graph)
+            summary_writer = tf.summary.FileWriter(FLAGS.log_dir, sess.graph)
             
             # Ensure, that no nodes are added to our computation graph.
             # Otherwise the learning will slow down dramatically
             tf.get_default_graph().finalize()
 
-            log_file = open(os.path.join(FLAGS.train_dir, 'console.log'), "w")
+            log_file = open(os.path.join(FLAGS.log_dir, 'console.log'), "w")
 
             #
             # Training loop
@@ -321,12 +316,12 @@ def _train_model():
 
                     # Save model checkpoint
                     if (step % 1000 == 0) or (step >= FLAGS.max_steps -1):
-                        checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                        checkpoint_path = os.path.join(FLAGS.log_dir, 'model.ckpt')
                         saver.save(sess, checkpoint_path, global_step=global_step)
             
             
             except tf.errors.OutOfRangeError:
-                checkpoint_path = os.path.join(FLAGS.train_dir, 'model.ckpt')
+                checkpoint_path = os.path.join(FLAGS.log_dir, 'model.ckpt')
                 saver.save(sess, checkpoint_path, global_step=global_step)
                 print('Done training for %d epochs, %d steps.' % (FLAGS.num_epochs, step))
             
@@ -355,20 +350,20 @@ def main(argv=None):
         FLAGS.cross_validation_iteration = int(argv[2])
 
     # Set training dir for current fold
-    FLAGS.train_dir = "{0}/generation-{1}/k-{2}/".format(
-        FLAGS.train_dir,
+    FLAGS.log_dir = "{0}/generation-{1}/k-{2}/".format(
+        FLAGS.log_dir,
         FLAGS.generation,
         FLAGS.cross_validation_iteration)
 
     # Create log dir if not exists
-    if tf.gfile.Exists(FLAGS.train_dir):
-        x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.train_dir)
+    if tf.gfile.Exists(FLAGS.log_dir):
+        x = input("\nThe folder %s is not empty. Should we delete it ? (y/n) " % FLAGS.log_dir)
         if x != "y":
             print("Finished...")
             return
 
-        tf.gfile.DeleteRecursively(FLAGS.train_dir)
-    tf.gfile.MakeDirs(FLAGS.train_dir)
+        tf.gfile.DeleteRecursively(FLAGS.log_dir)
+    tf.gfile.MakeDirs(FLAGS.log_dir)
 
     # Start training
     _train_model()

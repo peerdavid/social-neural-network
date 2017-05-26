@@ -54,7 +54,7 @@ def _append_experience():
             with open(train_file, 'r') as file_handler:
                 train_images = [line.rstrip('\n') for line in file_handler]
             
-            dataset = data_input.read_image_batches_with_labels_in_blacklist_from_path(FLAGS, FLAGS.img_dir, train_images)
+            dataset = data_input.read_image_batches_with_labels_in_blacklist_from_path(FLAGS, FLAGS.train_dir, train_images)
 
             # Inference model
             print("Restore graph from meta file {0}.meta".format(FLAGS.checkpoint))

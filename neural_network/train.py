@@ -308,14 +308,14 @@ def _train_model():
                         summary_writer.add_summary(summary_str[0], step)
                         
                     # Evaluation 
-                    if step % 1000 == 0:
+                    if step % 2000 == 0:
                         validate(log_file, sess, "Validation", images_pl, labels_pl, dropout_pl, validation_dataset, 
                                 summary_writer, step, prediction)
                         validate(log_file, sess, "Training", images_pl, labels_pl, dropout_pl, train_dataset, 
                                 summary_writer, step, prediction)
 
                     # Save model checkpoint
-                    if (step % 1000 == 0) or (step >= FLAGS.max_steps -1):
+                    if (step % 2000 == 0) or (step >= FLAGS.max_steps -1):
                         checkpoint_path = os.path.join(FLAGS.log_dir, 'model.ckpt')
                         saver.save(sess, checkpoint_path, global_step=global_step)
             

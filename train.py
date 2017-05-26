@@ -203,9 +203,9 @@ def _train_model():
                 invalid_images = []
 
             # Read social network images
-            datasets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
-            train_dataset = datasets.train
-            validation_dataset = datasets.validation
+            data_sets = data_input.read_validation_and_train_image_batches(FLAGS, FLAGS.img_dir, invalid_images)
+            train_dataset = data_sets.train
+            validation_dataset = data_sets.validation
             
             # Log images
             f = open(FLAGS.train_dir + "train_images.txt", "w")
@@ -245,7 +245,7 @@ def _train_model():
             train_op = _create_adam_train_op(train_loss, global_step)
 
             # Create a saver for writing training checkpoints.
-            saver = tf.train.Saver(tf.all_variables(), max_to_keep=10)
+            saver = tf.train.Saver(tf.global_variables(), max_to_keep=10)
 
             # Add tensorboard summaries
             tf.summary.image('image_train', train_dataset.images, max_outputs = 5)
@@ -255,7 +255,7 @@ def _train_model():
             summary_op = tf.summary.merge_all()
             
             # Add the variable initializer Op.
-            init = tf.initialize_all_variables()
+            init = tf.global_variables_initializer()
             
             # Create a session for running Ops on the Graph.
             sess = tf.Session()

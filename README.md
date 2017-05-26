@@ -4,11 +4,12 @@
 ## Introduction
 ### Goal
 In this work we want to check, if it is possible to *train convolutional neural networks (CNN)*
-with images that are tagged by users in social networks. Therefore this work is called *social neural networks (SNN)*.
-For example, we download images that are tagged with 'cat' and images that are tagged with 'dog' and use those images, to train a CNN.
-Afterwards we want to check the performance of the network using a *well defined* dataset. With well defined dataset we mean, 
-that all images are correctly labeled (because lots of images from social networks contains invalid tags). 
-In this work we used the ImageNet dataset to check the performance of the network.
+with images tagged by social networks users. Therefore this work is called *social neural networks (SNN)*.
+For example, to let a network learn how cats and dogs look like, we download images that are tagged with 'cat' 
+and images that are tagged with 'dog' from social networks and use those images to train a CNN. To check the 
+performance of the network a *well defined* dataset is used in this work. 
+With well defined dataset we mean, that we can be sure that all images are correctly labeled (because lots of images from social 
+networks contains invalid tags). We used the ImageNet dataset to check the performance of the network.
 
 ### Motivation
 In supervised learning a CNN is trained with labeled images. This means, that training examples
@@ -18,13 +19,13 @@ direction of the gradient estimate. This reduces the error on the training set a
 desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-et-al-2016) states that about 5.000 labeled examples per category
 are needed to get an acceptable performance of the network. 
 
-The creation of datasets with at least 5.000 labeled images per class is a time consuming task. So in this work we used
-images tagged by flickr users to create a dataset for 6 different classes. 
+TO create a datasets with at least 5.000 labeled images per class is a time consuming task. So in this work we want to check if it
+is possible to train a CNN with images from 6 different classes that are tagged by flickr users. 
 
 ### Challenge
-The challenge of this work is, that lots of examples are are invalid tagged. For example an image of 
-an austrian guy is tagged with beer. Its funny but its not helpful for our network to learn, how a beer
-looks like.
+The challenge of this work is, that lots of examples are are invalid tagged. For example if the network should learn 
+the difference between beer and wine, we download images with those tags from social networks. Sometimes images
+of austrian guys are tagged with beer. Its funny but its not helpful for our network to learn, how a beer or a wine looks like.
 
 
 ## Data

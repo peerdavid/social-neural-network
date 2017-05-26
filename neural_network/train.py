@@ -290,7 +290,7 @@ def _train_model():
                     duration = time.time() - start_time
 
                     # Print step loss etc. to console
-                    if step % 10 == 0:
+                    if (step % 10 == 0) or (step >= FLAGS.max_steps -1):
                         steps_per_epoch = train_dataset.size // train_dataset.batch_size
                         epoch = int(step / steps_per_epoch) + 1
                         num_examples_per_step = train_dataset.batch_size
@@ -302,13 +302,13 @@ def _train_model():
                                     examples_per_sec, sec_per_batch))
                     
                     # Write summary to tensorboard
-                    if step % 100 == 0:
+                    if (step % 100 == 0) or (step >= FLAGS.max_steps -1):
                         log_file.flush()
                         summary_str = sess.run([summary_op], feed_dict=train_feed)
                         summary_writer.add_summary(summary_str[0], step)
                         
                     # Evaluation 
-                    if step % 2000 == 0:
+                    if (step % 2000 == 0) or (step >= FLAGS.max_steps -1):
                         validate(log_file, sess, "Validation", images_pl, labels_pl, dropout_pl, validation_dataset, 
                                 summary_writer, step, prediction)
                         validate(log_file, sess, "Training", images_pl, labels_pl, dropout_pl, train_dataset, 

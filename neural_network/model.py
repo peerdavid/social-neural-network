@@ -47,15 +47,15 @@ def fully_connected(name, input, shape, weight_decay=0.0):
         return fc
 
 
-def softmax(name, input, shape):
+def output(name, input, shape):
     with tf.variable_scope(name) as scope:
         weights = _variable_with_weight_decay('weights', shape,
                                             stddev=1/shape[0], weight_decay=0.0)
         biases = _get_variable('biases', [shape[1]],
                                 tf.constant_initializer(0.0))
-        softmax_linear = tf.add(tf.matmul(input, weights), biases, name=scope.name)
-        _activation_summary(softmax_linear)
-        return softmax_linear
+        logits = tf.sigmoid(tf.matmul(input, weights) + biases)
+        _activation_summary(logits)
+        return logits
     
 
 def inference(images, num_classes, depth, dropout):
@@ -85,55 +85,48 @@ def inference(images, num_classes, depth, dropout):
 
     # Input is 224x224x3
     # Note: Compromise at first layer to reduce memory usage 
-    conv1_1 = conv_layer(name='conv1_1', input=images, shape=[7, 7, depth, 64], 
-        weight_decay=weight_decay*2, stride=[1, 2, 2, 1], visualize=(8, 8))
-    conv1_2 = conv_layer(name='conv1_2', input=conv1_1, shape=[5, 5, 64, 64], weight_decay=weight_decay)
+    conv1_1 = conv_layer(name='conv1_1', input=images, shape=[7, 7, depth, 32], 
+        weight_decay=weight_decay*2, stride=[1, 2, 2, 1], visualize=(8, 4))
+    conv1_2 = conv_layer(name='conv1_2', input=conv1_1, shape=[5, 5, 32, 32], weight_decay=weight_decay)
 
-    # Input is 112x112x64
+    # Input is 112x112x32
     max_pool1 = max_pool_2x2('max_pool1', conv1_2)
 
-    # Input is 56x56x64
-    conv2_1 = conv_layer(name='conv2_1', input=max_pool1, shape=[5, 5, 64, 128], weight_decay=weight_decay)
-    conv2_2 = conv_layer(name='conv2_2', input=conv2_1, shape=[5, 5, 128, 128], weight_decay=weight_decay)
-    #conv2_3 = conv_layer(name='conv2_3', input=conv2_2, shape=[5, 5, 128, 128], weight_decay=weight_decay)
+    # Input is 56x56x32
+    conv2_1 = conv_layer(name='conv2_1', input=max_pool1, shape=[5, 5, 32, 64], weight_decay=weight_decay)
+    conv2_2 = conv_layer(name='conv2_2', input=conv2_1, shape=[5, 5, 64, 80], weight_decay=weight_decay)
     max_pool2 = max_pool_2x2('max_pool2', conv2_2)
    
-    # Input is 28x28x128
-    conv3_1 = conv_layer(name='conv3_1', input=max_pool2, shape=[5, 5, 128, 64], weight_decay=weight_decay)
-    conv3_2 = conv_layer(name='conv3_2', input=conv3_1, shape=[5, 5, 64, 64], weight_decay=weight_decay)
-    #conv3_3 = conv_layer(name='conv3_3', input=conv3_2, shape=[5, 5, 64, 64], weight_decay=weight_decay)
+    # Input is 28x28x80
+    conv3_1 = conv_layer(name='conv3_1', input=max_pool2, shape=[5, 5, 80, 80], weight_decay=weight_decay)
+    conv3_2 = conv_layer(name='conv3_2', input=conv3_1, shape=[5, 5, 80, 192], weight_decay=weight_decay)
     max_pool3 = max_pool_2x2('max_pool3', conv3_2)
 
-    # Input is 14x14x64
-    conv4_1 = conv_layer(name='conv4_1', input=max_pool3, shape=[5, 5, 64, 32], weight_decay=weight_decay)
-    conv4_2 = conv_layer(name='conv4_2', input=conv4_1, shape=[5, 5, 32, 32], weight_decay=weight_decay)
-    #conv4_3 = conv_layer(name='conv4_3', input=conv4_2, shape=[5, 5, 32, 32], weight_decay=weight_decay)
+    # Input is 14x14x192
+    conv4_1 = conv_layer(name='conv4_1', input=max_pool3, shape=[5, 5, 192, 192], weight_decay=weight_decay)
+    conv4_2 = conv_layer(name='conv4_2', input=conv4_1, shape=[5, 5, 192, 192], weight_decay=weight_decay)
     max_pool4 = max_pool_2x2('max_pool4', conv4_2)
 
-    # Input is 7x7x32
-    reshape = tf.reshape(max_pool4, [-1, 7*7*32])
+    # Input is 7x7x192
+    reshape = tf.reshape(max_pool4, [-1, 7*7*192])
     dim = reshape.get_shape()[1].value
 
     #
     # Fully connected layers
     #
-    fc1 = fully_connected('fc1', reshape, [dim, (7*7*32) / 2], weight_decay=weight_decay)
+    fc1 = fully_connected('fc1', reshape, [dim, (7*7*192) / 2], weight_decay=weight_decay)
     fc1 = tf.nn.dropout(fc1, dropout)
-    fc2 = fully_connected('fc2', fc1, [(7*7*32) / 2, (7*7*32) / 8], weight_decay=weight_decay)
+    fc2 = fully_connected('fc2', fc1, [(7*7*192) / 2, (7*7*192) / 8], weight_decay=weight_decay)
     fc2 = tf.nn.dropout(fc2, dropout)
-    fc3 = fully_connected('fc3', fc2, [(7*7*32) / 8, (7*7*32) / 32], weight_decay=weight_decay)
+    fc3 = fully_connected('fc3', fc2, [(7*7*192) / 8, (7*7*192) / 32], weight_decay=weight_decay)
     fc3 = tf.nn.dropout(fc3, dropout)
-    #fc4 = fully_connected('fc4', fc3, [(7*7*32) / 4, (7*7*32) / 16], weight_decay=weight_decay)
-    #fc4 = tf.nn.dropout(fc4, dropout)
-    #fc5 = fully_connected('fc5', fc4, [(7*7*32) / 16, (7*7*32) / 32], weight_decay=weight_decay)
-    #fc5 = tf.nn.dropout(fc5, dropout)
 
     #
-    # Force output to represent a propability
+    # Create a linear output
     #
-    softmax_linear = softmax('softmax_linear', fc3, [49, num_classes])
+    logits = output('output', fc3, [(7*7*192) / 32, num_classes])
 
-    return softmax_linear
+    return logits
     
 
 def _activation_summary(x):

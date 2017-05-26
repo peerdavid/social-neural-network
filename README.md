@@ -27,24 +27,25 @@ The challenge of this work is, that lots of examples are are invalid tagged. For
 the difference between beer and wine, we download images with those tags from social networks. Sometimes images
 of austrian guys are tagged with beer. Its funny but its not helpful for our network to learn, how a beer or a wine looks like.
 
-## Overview
-The following image shows an overview of all parts of the system:
+## System
+The following image shows an overview of all differnt parts of the system:
 
 ![System Overview](docs/system-overview.png)
 
-## Data
+### Social Network
+ToDo: Describe datr
+
+### Training Set
 ToDo: Describe and cite datr
 
+### Test Set
+ToDo: Describe why we used imagenet 
 
-## Network Architecture
+### Network Architecture
 ToDo: Describe why we not used a pre-trained inception model
-
 
 ### Multiple generations
 ToDo: Describe the idea of multiple generations
-
-## Metrics and Test Set
-ToDo: Describe why we used imagenet 
 
 
 ## Results 

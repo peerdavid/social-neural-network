@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 # Data folder with training data etc.
-data
+data*
 log*
 
 # Distribution / packaging

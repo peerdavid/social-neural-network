@@ -12,12 +12,13 @@
 #   (5) Compare F1 for generation-0 and generation-1
 ###########################################################
 
+
 #
 # Configuration
 #
 CLASSES=("$@")
 DOWNLOAD_PATH="data/train"
-NUM_IMAGES=4000
+NUM_IMAGES=5000
 
 
 function main {

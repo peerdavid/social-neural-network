@@ -19,8 +19,9 @@ direction of the gradient estimate. This reduces the error on the training set a
 desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-et-al-2016) states that about 5.000 labeled examples per category
 are needed to get an acceptable performance of the network. 
 
-TO create a datasets with at least 5.000 labeled images per class is a time consuming task. So in this work we want to check if it
-is possible to train a CNN with images from 6 different classes that are tagged by flickr users. 
+It is a timeconsuming task to create a dataset with at least 5.000 labeled images per class. So in this work we want to check if it
+is possible to train a CNN with images from 6 different classes (0=cat, 1=dog, 2=hamburger, 3=sushi, 4=beach, 5=rock) that are tagged 
+by flickr users to save lots of time.
 
 ### Challenge
 The challenge of this work is, that lots of examples are are invalid tagged. For example if the network should learn 
@@ -28,7 +29,7 @@ the difference between beer and wine, we download images with those tags from so
 of austrian guys are tagged with beer. Its funny but its not helpful for our network to learn, how a beer or a wine looks like.
 
 ## System
-The following image shows an overview of all differnt parts of the system:
+The following image shows an overview of all different parts of the system:
 
 ![System Overview](docs/system-overview.png)
 

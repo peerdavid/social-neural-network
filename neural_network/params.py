@@ -37,7 +37,7 @@ flags.DEFINE_integer('cross_validation_iteration', 0, 'Current cross validation 
 #
 # Training
 #
-flags.DEFINE_float('initial_learning_rate', 0.0001, 'Initial learning rate.')
+flags.DEFINE_float('initial_learning_rate', 0.001, 'Initial learning rate.')
 flags.DEFINE_integer('max_steps', 30000, 'Max. number of steps to run trainer.')
 flags.DEFINE_integer('num_epochs', 100000, 'Max. number of epochs to run trainer.')
 flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during training.')

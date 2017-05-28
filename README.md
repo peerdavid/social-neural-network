@@ -39,6 +39,11 @@ ToDo: Describe datr
 ### Training Set
 ToDo: Describe and cite datr
 
+* Split training set into training and validation set using 3-fold cross validation
+* Data augmentation
+* Balance training set using oversampling
+* Use f1 to measure performance, because of imbalanced validation set
+
 ### Test Set
 ToDo: Describe why we used imagenet 
 

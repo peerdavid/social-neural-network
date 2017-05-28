@@ -18,7 +18,7 @@
 #
 CLASSES=("$@")
 DOWNLOAD_PATH="data/train"
-NUM_IMAGES=5000
+NUM_IMAGES=7000
 
 
 function main {

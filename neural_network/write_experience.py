@@ -107,6 +107,7 @@ def main(argv=None):
     if(len(argv) > 1):
         FLAGS.generation = int(argv[1])
         FLAGS.cross_validation_iteration = int(argv[2])
+        FLAGS.checkpoint = FLAGS.generation_checkpoint.format(FLAGS.generation, FLAGS.cross_validation_iteration)
 
     _append_experience()
 

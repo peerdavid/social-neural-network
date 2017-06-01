@@ -14,7 +14,6 @@ def main(argv):
     datr.download(
         path=path, 
         search_tags=name, 
-        use_free_text=False, 
         license="", 
         max_num_img=max_num_images, 
         num_threads=20, 

@@ -31,7 +31,7 @@ flags.DEFINE_integer('image_depth', 3, '1 = grayscale, 3 = rgb')
 flags.DEFINE_integer('num_threads', 2, 'Number of threads to fill queue of batches')
 
 flags.DEFINE_integer('k_fold_cross_validation', 3, 'We wan a k-Fold cross validation.')
-flags.DEFINE_integer('cross_validation_iteration', 2, 'Current cross validation iteration. 0 ... n-1')
+flags.DEFINE_integer('cross_validation_iteration', 0, 'Current cross validation iteration. 0 ... n-1')
 
 
 #
@@ -46,7 +46,7 @@ flags.DEFINE_float('dropout_keep_prob', 0.8, 'Probability to keep units during t
 #
 # Generation of network
 #
-flags.DEFINE_integer('generation', 0, 'Current generation')
+flags.DEFINE_integer('generation', 1, 'Current generation')
 flags.DEFINE_string('generation_checkpoint', "log/generation-{0}/k-{1}/model.ckpt-34001", 'Use this checkpoint file to restore the values')
 flags.DEFINE_string('generation_experience_file', "log/generation-{0}/experience.txt", "WHat the gen x learned about the classes")
 flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_images.txt", "WHat the gen x learned about the classes")
@@ -55,4 +55,4 @@ flags.DEFINE_string('generation_train_file', "log/generation-{0}/k-{1}/train_ima
 #
 # Evaluation
 #
-flags.DEFINE_string('checkpoint', "log/generation-0/k-2/model.ckpt-34001", 'Use this checkpoint file to restore the values')
+flags.DEFINE_string('checkpoint', "log/generation-1/k-0/model.ckpt-50000", 'Use this checkpoint file to restore the values')

@@ -20,8 +20,8 @@ desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-e
 are needed to get an acceptable performance of the network. 
 
 It is a timeconsuming task to create a dataset with at least 5.000 labeled images per class. So in this work we want to check if it
-is possible to train a CNN with images from 6 different classes (0=cat, 1=dog, 2=hamburger, 3=sushi, 4=beach, 5=rock) that are tagged 
-by flickr users to save lots of time.
+is possible to train a CNN with images from 6 different classes (0=cat, 1=dog, 2=hamburger, 3=sushi, 4=beach, 5=rock) 
+that are tagged by flickr users to save lots of time.
 
 ### Challenge
 The challenge of this work is, that lots of examples are are invalid tagged. For example if the network should learn 
@@ -34,32 +34,60 @@ The following image shows an overview of all different parts of the system:
 ![System Overview](docs/system-overview.png)
 
 ### Social Network
-ToDo: Describe datr
+Flickr provides an interface to download images [2](#Flickr-Api-2017). This interface is used
+to download all training images.
 
 ### Training Set
-ToDo: Describe and cite datr
+The tool [datr](#Flickr-Api-2017)
+already provides a python library, to download images from flickr with given tags. This tool is used
+to download 10.000 images per class. The training set is split into a training and a validation set using 
+3-fold cross validation.
 
-* Split training set into training and validation set using 3-fold cross validation
-* Data augmentation
-* Balance training set using oversampling
-* Use f1 to measure performance, because of imbalanced validation set
+Before images are feed into the network, random distortions (per epoch) are applied to all images to reduce
+overfitting.
 
 ### Test Set
-ToDo: Describe why we used imagenet 
+As described above some images of the training set are invalid tagged. Therefore we use a well defined dataset
+to measure the performance (f1-score) of the network. In this work we used the [Imagenet](Imagenet-2017) dataset.
+About 1.300 images per class are used from this well defined dataset to measure the performance of the network.
 
 ### Network Architecture
-ToDo: Describe why we not used a pre-trained inception model
+We decided to train a network from scratch with input images of size 224x224x3.
+The following architecture was used:
 
-### Multiple generations
-ToDo: Describe the idea of multiple generations
+| Name          | Shape            | Output Size  |
+| ------------- | ---------------- | ------------ |
+| conv1_1       | 7x7x32           | 112x112x32   |
+| conv1_2       | 5x5x32           | 112x112x32   |
+| max_pool1     | -                | 56x56x32     |
+| conv2_1       | 5x5x64           | 56x56x64     |
+| conv2_2       | 5x5x80           | 56x56x80     |
+| max_pool2     | -                | 28x28x80     |
+| conv3_1       | 5x5x80           | 28x28x80     |
+| conv3_2       | 5x5x192          | 28x28x192    |
+| max_pool3     | -                | 14x14x192    |
+| conv4_1       | 5x5x192          | 14x14x192    |
+| conv4_2       | 5x5x192          | 14x14x192    |
+| max_pool4     | -                | 7x7x192      |
+| fc1           | -                | 4704         |
+| fc2           | -                | 1176         |
+| fc3           | -                | 294          |
+| out           | -                | 6            |
 
 
 ## Results 
 
 
-## Future works
-
 
 ## References
 <a name="Goodfellow-et-al-2016">[1]</a>: Ian Goodfellow and Yoshua Bengio and Aaron Courville. *Deep Learning*, 
 URL <a href="http://www.deeplearningbook.org">http://www.deeplearningbook.org</a>, 2016
+
+<a name="Flickr-Api-2017">[2]</a>: *Flickr API*, 
+URL <a hrref="https://www.flickr.com/services/api/">https://www.flickr.com/services/api/</a>, 2017
+
+<a name="Datr-2017">[3]</a>: Download images from flickr with python, *datr*, 
+URL <a hrref="http://github.com/peerdavid/datr">http://github.com/peerdavid/datr</a>, 2017
+
+<a name="Imagenet-2017">[4]</a>: *ImageNet Dataset*, 
+URL <a hrref="http://www.image-net.org/">http://www.image-net.org/</a>, 2017

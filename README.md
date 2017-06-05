@@ -34,7 +34,7 @@ The following image shows an overview of all different parts of the system:
 ![System Overview](docs/system-overview.png)
 
 ### Social Network
-Flickr provides an interface to download images [2](#Flickr-Api-2017). This interface is used
+Flickr provides an interface to download images [[2]](#Flickr-Api-2017). This interface is used
 to download all training images.
 
 ### Training Set
@@ -48,7 +48,7 @@ overfitting.
 
 ### Test Set
 As described above some images of the training set are invalid tagged. Therefore we use a well defined dataset
-to measure the performance (f1-score) of the network. In this work we used the [Imagenet](Imagenet-2017) dataset.
+to measure the performance (f1-score) of the network. In this work we used the [Imagenet (2017)](#Imagenet-2017) dataset.
 About 1.300 images per class are used from this well defined dataset to measure the performance of the network.
 
 ### Network Architecture
@@ -76,7 +76,7 @@ The following architecture was used:
 
 
 ## Results 
-After the network was trained, we measured the f1-score using images from [Imagenet](Imagenet-2017).
+After the network was trained, we measured the f1-score using images from [#Imagenet (2017)](Imagenet-2017).
 The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothesis that the validation f1-score
 is lower than the test f1-score is, that lots of images of the validation set are invalid tagged and therefore the network could only 
 guess for those invalid images. The test set does not contain invalid labeled images and therefore the f1-score is higher.

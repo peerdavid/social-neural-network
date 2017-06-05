@@ -93,7 +93,7 @@ trained with those images. If the test score of generation 1 is lower, we can co
 from the training set, the training set only becomes smaller and therefore we can conclude that the hypothesis is wrong.
 
 After we trained generation 1 of the network, we have seen that the validation f1-score increased from 0.60 (generation 0) to 
-0.72 and the test f1-score has not changed between both generations. This result supports the hypothesis, that it is possible to 
+0.72 (generation 1) and the test f1-score has not changed between both generations. This result supports the hypothesis, that it is possible to 
 train a neural network with images from social networks and to use the same network to filter invalid images out of the training set.
 
 

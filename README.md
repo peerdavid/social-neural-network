@@ -5,28 +5,28 @@
 ### Goal
 In this work we want to check, if it is possible to *train convolutional neural networks (CNN)*
 with images tagged by social networks users. Therefore this work is called *social neural networks (SNN)*.
-For example, to let a network learn how cats and dogs look like, we download images that are tagged with 'cat' 
+For example, to let a network learn how cats and dogs look like we download images that are tagged with 'cat' 
 and images that are tagged with 'dog' from social networks and use those images to train a CNN. To check the 
 performance of the network a *well defined* dataset is used in this work. 
-With well defined dataset we mean, that we can be sure that all images are correctly labeled (because lots of images from social 
-networks contains invalid tags). We used the ImageNet dataset to check the performance of the network.
+With well defined dataset we mean, that we can be sure that all images are correctly labeled, because lots of training samples from social 
+networks contains invalid tags. In this work we used the ImageNet dataset to check the performance of the network.
 
 ### Motivation
 In supervised learning a CNN is trained with labeled images. This means, that training examples
 are feed forward through the network to generate a prediction using the current weights of the network. Afterwards an error between the
 predictions and the labels is calculated. The error is used to adjust all learnable parameters of the network into the negative 
 direction of the gradient estimate. This reduces the error on the training set and produces a more
-desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-et-al-2016) states that about 5000 labeled examples per category
+desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-et-al-2016) states, that about 5000 labeled examples per category
 are needed to get an acceptable performance of the network. 
 
 It is a timeconsuming task to create a dataset with at least 5000 labeled images per class. So in this work we want to check if it
 is possible to train a CNN with images from 6 different classes (0=cat, 1=dog, 2=hamburger, 3=sushi, 4=beach, 5=rock) 
-that are tagged by flickr users to save lots of time.
+that are tagged by flickr users. This saves lots of time, because no dataset must be created manually.
 
 ### Challenge
-The challenge of this work is, that lots of examples are are invalid tagged. For example if the network should learn 
-the difference between beer and wine, we download images with those tags from social networks. Sometimes images
-of austrian guys are tagged with beer. Its funny but its not helpful for our network to learn, how a beer or a wine looks like.
+The challenge of this work is that lots of training examples are are invalid tagged. For example, if the network should learn 
+the difference between beer and wine we download images with those tags from social networks. Sometimes images
+of austrian guys are tagged with beer. Its really funny but its not helpful for our network to learn, how a beer or a wine looks like.
 
 ## System
 The following image shows an overview of all different parts of the system:
@@ -34,17 +34,15 @@ The following image shows an overview of all different parts of the system:
 ![System Overview](docs/system-overview.png)
 
 ### Social Network
-Flickr provides an interface to download images [[2]](#Flickr-Api-2017). This interface is used
+Flickr provides an interface to download images [[2]](#Flickr-Api-2017) from their social network. This interface is used
 to download all training images.
 
 ### Training Set
-The tool [datr](#Flickr-Api-2017)
-already provides a python library, to download images from flickr with given tags. This tool is used
-to download 10.000 images per class. The training set is split into a training and a validation set using 
+The tool [datr](#Flickr-Api-2017) already provides a python library, to download images from flickr with given tags. 
+This tool is used to download 10000 images per class. The training set is later split into a training and a validation set using 
 3-fold cross validation.
 
-Before images are feed into the network, random distortions (per epoch) are applied to all images to reduce
-overfitting.
+Before images are feed into the network, random distortions per epoch are applied to all images to reduce overfitting.
 
 ### Test Set
 As described above some images of the training set are invalid tagged. Therefore we use a well defined dataset
@@ -52,7 +50,7 @@ to measure the performance (f1-score) of the network. In this work we used the [
 About 1.300 images per class are used from this well defined dataset to measure the performance of the network.
 
 ### Network Architecture
-We decided to train a network from scratch with input images of size 224x224x3.
+We decided to train a network from scratch (instead of fine tuning) with input images of size 224x224x3.
 The following architecture was used:
 
 | Name          | Shape            | Output Size  |
@@ -69,9 +67,9 @@ The following architecture was used:
 | conv4_1       | 5x5x192          | 14x14x192    |
 | conv4_2       | 5x5x192          | 14x14x192    |
 | max_pool4     | -                | 7x7x192      |
-| fc1           | -                | 4704         |
-| fc2           | -                | 1176         |
-| fc3           | -                | 294          |
+| fc1 (dropout) | -                | 4704         |
+| fc2 (dropout) | -                | 1176         |
+| fc3 (dropout) | -                | 294          |
 | out           | -                | 6            |
 
 
@@ -81,23 +79,22 @@ The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothe
 is lower than the test f1-score is, that lots of images of the validation set are invalid tagged and therefore the network could only 
 guess for those invalid images. The test set does not contain invalid labeled images and therefore the f1-score is higher.
 
-Using this result we checked, if it is possible to filter invalid images of the training set from social networks with
+With this result we want to check, if it is possible to filter invalid images of the training set from social networks with
 neural networks that are trained on those invalid datasets. To check the hypothesis we decided to train the network a second 
 time (referred to as generation 1) only on those images, that are correctly classified by generation 0 (all other images are invalid with 
-a propability of 70%). The idea is that generation 0 filters lots of invalid images from the dataset (list of invalid images 
-are written into an experience file that is used by generation 1).
-*Note: Generation 0 always filters the validation fold of the dataset (never the training folds). So after the network is 
-trained on all k-folds, the whole dataset is filtered and generation 1 can be trained.*
+a probability of 70%). The idea is that generation 0 filters lots of invalid images from the dataset (list of invalid images 
+are written into an experience file that is used by generation 1). *Note: Generation 0 always filters the validation fold of the 
+dataset (never the training folds). So after the network is trained on all k-folds, the whole dataset is filtered and generation 
+1 can be trained.*
 
 If the test score is almost the same for generation 1 we can 
 conclude, that the first network trained with all images is able to filter invalid images from the training set although it was 
-trained with invalid images. If the test score of generation 1 is lower, we can conclude that generation 0 removed also valid images
-from the training set, the training set only becomes smaller and keeps the ratio between valid and invalid images and 
-therefore the score is lower.
+trained with those images. If the test score of generation 1 is lower, we can conclude that generation 0 removed also valid images
+from the training set, the training set only becomes smaller and therefore we can conclude that the hypothesis is wrong.
 
 After we trained generation 1 of the network, we have seen that the validation f1-score increased from 0.60 (generation 0) to 
-0.72 and the test f1-score has not changed between both generations. So we can conclude, that it is possible to train a neural network
-with images from social networks and to use the same network to filter invalid images out of the training set.
+0.72 and the test f1-score has not changed between both generations. This result supports the hypothesis, that it is possible to 
+train a neural network with images from social networks and to use the same network to filter invalid images out of the training set.
 
 
 ## References

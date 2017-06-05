@@ -8,7 +8,7 @@ with images tagged by social networks users. Therefore this work is called *soci
 For example, to let a network learn how cats and dogs look like we download images that are tagged with 'cat' 
 and images that are tagged with 'dog' from social networks and use those images to train a CNN. To check the 
 performance of the network a *well defined* dataset is used in this work. 
-With well defined dataset we mean, that we can be sure that all images are correctly labeled, because lots of training samples from social 
+With well defined dataset we mean that we can be sure that all images are correctly labeled, because lots of training samples from social 
 networks contains invalid tags. In this work we used the ImageNet dataset to check the performance of the network.
 
 ### Motivation
@@ -74,18 +74,18 @@ The following architecture was used:
 
 
 ## Results 
-After the network was trained, we measured the f1-score using images from [#Imagenet (2017)](Imagenet-2017).
+After the network was trained, we measured the f1-score for the test and validation set.
 The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothesis why the validation f1-score
 is lower than the test f1-score is, that lots of images of the validation set are invalid tagged and therefore the network could only 
 guess for those invalid images. The test set does not contain invalid labeled images and therefore the f1-score is higher.
 
-If this hypothesis is true it should be possible to filter invalid images of the training set created from social networks with
-neural networks that are trained with the same dataset. To check the hypothesis we decided to train the network a second 
+If this hypothesis is true it should be possible to train a CNN with images from social networks and use the same model
+to filter invalid tagged images of the dataset.To check if this is possible we decided to train the network a second 
 time (referred to as generation 1) only on those images, that are correctly classified by generation 0 (all other images are invalid 
 tagged with a probability of 70%). The idea is that generation 0 writes a list of all invalid images of the training set
-into an *experience file* and generation 1 does not use those images during training. *Note: Generation 0 always filters the validation fold of the 
-dataset (never the training folds). So after the network is trained on all k-folds, the whole dataset is filtered and generation 
-1 can be trained.*
+into an *experience file* and generation 1 does not use those images during training. *Note: Generation 0 always filters the 
+validation fold of the dataset (never the training folds). So after the network is trained on all k-folds, the whole dataset is 
+filtered and generation 1 can be trained.*
 
 If the test score is almost the same for generation 1 we can 
 conclude, that the first network trained with all images is able to filter invalid images from the training set although it was 

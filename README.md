@@ -21,7 +21,7 @@ are needed to get an acceptable performance of the network.
 
 It is a timeconsuming task to create a dataset with at least 5000 labeled images per class. So in this work we want to check if it
 is possible to train a CNN with images from 6 different classes (0=cat, 1=dog, 2=hamburger, 3=sushi, 4=beach, 5=rock) 
-that are tagged by flickr users. This saves lots of time, because no dataset must be created manually.
+that are tagged by flickr users.
 
 ### Challenge
 The challenge of this work is that lots of training examples are are invalid tagged. For example, if the network should learn 

@@ -76,7 +76,28 @@ The following architecture was used:
 
 
 ## Results 
+After the network was trained, we measured the f1-score using images from [Imagenet](Imagenet-2017).
+The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothesis that the validation f1-score
+is lower than the test f1-score is, that lots of images of the validation set are invalid tagged and therefore the network could only 
+guess for those invalid images. The test set does not contain invalid labeled images and therefore the f1-score is higher.
 
+Using this result we checked, if it is possible to filter invalid images of the training set from social networks with
+neural networks that are trained on those invalid datasets. To check the hypothesis we decided to train the network a second 
+time (referred to as generation 1) only on those images, that are correctly classified by generation 0 (all other images are invalid with 
+a propability of 70%). The idea is that generation 0 filters lots of invalid images from the dataset (list of invalid images 
+are written into an experience file that is used by generation 1).
+*Note: Generation 0 always filters the validation fold of the dataset (never the training folds). So after the network is 
+trained on all k-folds, the whole dataset is filtered and generation 1 can be trained.*
+
+If the test score is almost the same for generation 1 we can 
+conclude, that the first network trained with all images is able to filter invalid images from the training set although it was 
+trained with invalid images. If the test score of generation 1 is lower, we can conclude that generation 0 removed also valid images
+from the training set, the training set only becomes smaller and keeps the ratio between valid and invalid images and 
+therefore the score is lower.
+
+After we trained generation 1 of the network, we have seen that the validation f1-score increased from 0.60 (generation 0) to 
+0.72 and the test f1-score has not changed between both generations. So we can conclude, that it is possible to train a neural network
+with images from social networks and to use the same network to filter invalid images out of the training set.
 
 
 ## References

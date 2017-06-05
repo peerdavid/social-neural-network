@@ -3,7 +3,7 @@
 
 ## Introduction
 ### Goal
-In this work we want to check, if it is possible to *train convolutional neural networks (CNN)*
+In this work we want to check if it is possible to train *convolutional neural networks (CNN)*
 with images tagged by social networks users. Therefore this work is called *social neural networks (SNN)*.
 For example, to let a network learn how cats and dogs look like we download images that are tagged with 'cat' 
 and images that are tagged with 'dog' from social networks and use those images to train a CNN. To check the 

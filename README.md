@@ -47,7 +47,7 @@ Before images are feed into the network, random distortions per epoch are applie
 ### Test Set
 As described above some images of the training set are invalid tagged. Therefore we use a well defined dataset
 to measure the performance (f1-score) of the network. In this work we used the [Imagenet (2017)](#Imagenet-2017) dataset.
-About 1.300 images per class are used from this well defined dataset to measure the performance of the network.
+About 1300 images per class are used from this well defined dataset to measure the performance of the network.
 
 ### Network Architecture
 We decided to train a network from scratch (instead of fine tuning) with input images of size 224x224x3.

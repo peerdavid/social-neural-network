@@ -79,11 +79,11 @@ The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothe
 is lower than the test f1-score is, that lots of images of the validation set are invalid tagged and therefore the network could only 
 guess for those invalid images. The test set does not contain invalid labeled images and therefore the f1-score is higher.
 
-With this result we want to check, if it is possible to filter invalid images of the training set from social networks with
-neural networks that are trained on those invalid datasets. To check the hypothesis we decided to train the network a second 
-time (referred to as generation 1) only on those images, that are correctly classified by generation 0 (all other images are invalid with 
-a probability of 70%). The idea is that generation 0 filters lots of invalid images from the dataset (list of invalid images 
-are written into an experience file that is used by generation 1). *Note: Generation 0 always filters the validation fold of the 
+If this hypothesis is true it should be possible to filter invalid images of the training set created from social networks with
+neural networks that are trained with the same dataset. To check the hypothesis we decided to train the network a second 
+time (referred to as generation 1) only on those images, that are correctly classified by generation 0 (all other images are invalid 
+tagged with a probability of 70%). The idea is that generation 0 writes a list of all invalid images of the training set
+into an *experience file* and generation 1 does not use those images during training. *Note: Generation 0 always filters the validation fold of the 
 dataset (never the training folds). So after the network is trained on all k-folds, the whole dataset is filtered and generation 
 1 can be trained.*
 

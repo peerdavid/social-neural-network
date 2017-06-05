@@ -16,10 +16,10 @@ In supervised learning a CNN is trained with labeled images. This means, that tr
 are feed forward through the network to generate a prediction using the current weights of the network. Afterwards an error between the
 predictions and the labels is calculated. The error is used to adjust all learnable parameters of the network into the negative 
 direction of the gradient estimate. This reduces the error on the training set and produces a more
-desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-et-al-2016) states that about 5.000 labeled examples per category
+desirable output in the next iteration. [Goodfellow et al. (2016)](#Goodfellow-et-al-2016) states that about 5000 labeled examples per category
 are needed to get an acceptable performance of the network. 
 
-It is a timeconsuming task to create a dataset with at least 5.000 labeled images per class. So in this work we want to check if it
+It is a timeconsuming task to create a dataset with at least 5000 labeled images per class. So in this work we want to check if it
 is possible to train a CNN with images from 6 different classes (0=cat, 1=dog, 2=hamburger, 3=sushi, 4=beach, 5=rock) 
 that are tagged by flickr users to save lots of time.
 

@@ -75,7 +75,7 @@ The following architecture was used:
 
 ## Results 
 After the network was trained, we measured the f1-score using images from [#Imagenet (2017)](Imagenet-2017).
-The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothesis that the validation f1-score
+The validation f1-score is about 0.60 and the test f1-score is 0.72. One hypothesis why the validation f1-score
 is lower than the test f1-score is, that lots of images of the validation set are invalid tagged and therefore the network could only 
 guess for those invalid images. The test set does not contain invalid labeled images and therefore the f1-score is higher.
 
